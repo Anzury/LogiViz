@@ -1,0 +1,30 @@
+---
+import { ANNEAL_PSEUDOCODE } from '../core/annealing';
+import { CUT_PSEUDOCODE, RELOCATE_PSEUDOCODE, SAVINGS_PSEUDOCODE } from '../core/fleet';
+import { LNS_PSEUDOCODE } from '../core/lns';
+import { NN_PSEUDOCODE } from '../core/nearestNeighbour';
+import { INSERTION_PSEUDOCODE, RELOCATE_ON_TIME_PSEUDOCODE } from '../core/timeWindows';
+import { TWO_OPT_PSEUDOCODE } from '../core/twoOpt';
+
+const LISTINGS = {
+  nn: NN_PSEUDOCODE,
+  twoopt: TWO_OPT_PSEUDOCODE,
+  sa: ANNEAL_PSEUDOCODE,
+  cut: CUT_PSEUDOCODE,
+  savings: SAVINGS_PSEUDOCODE,
+  relocate: RELOCATE_PSEUDOCODE,
+  insertion: INSERTION_PSEUDOCODE,
+  'tw-relocate': RELOCATE_ON_TIME_PSEUDOCODE,
+  lns: LNS_PSEUDOCODE,
+};
+
+interface Props {
+  /** Also the name the chapter uses to highlight the current line. */
+  algo: keyof typeof LISTINGS;
+}
+const { algo } = Astro.props;
+---
+
+<ol class="code" data-code={algo} aria-label="Pseudo-code">
+  {LISTINGS[algo].map((line) => <li><code>{line}</code></li>)}
+</ol>

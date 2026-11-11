@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Number of the chapter this page is, read by the page's script; absent on the home page. */
+  chapter?: number;
+}
+const { title, description, chapter } = Astro.props;
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · LogiViz</title>
+    <meta name="description" content={description} />
+  </head>
+  <body data-chapter={chapter}>
+    <div class="stage" id="stage">
+      <div class="stage-canvas" id="stage-canvas"></div>
+      <p class="stage-status" data-bind="stageStatus">Montage de la maquette…</p>
+      {
+        chapter !== undefined && (
+          <div class="hud">
+            <div class="hud-readout">
+              <span class="hud-label" data-bind="hudLabel">Longueur du fil</span>
+              <span class="hud-value" data-bind="hudValue">—</span>
+            </div>
+            <button type="button" class="button" data-action="new-city">Nouvelle ville</button>
+          </div>
+        )
+      }
+      <span class="stage-badge">Rendu <span data-bind="backend"></span></span>
+    </div>
+
+    <main class="story" id="story">
+      <slot />
+    </main>
+  </body>
+</html>

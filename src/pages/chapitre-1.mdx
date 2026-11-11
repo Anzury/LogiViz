@@ -1,0 +1,108 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 1
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="intro">
+
+### Une ville, un dépôt, douze colis
+
+Sur la maquette, le **dépôt** est le grand bâtiment en carton, repéré par l’épingle noire. Douze maisons attendent chacune un colis.
+
+Le camion part du dépôt, passe une fois par chaque maison, puis rentre. Une seule question : **dans quel ordre ?**
+
+Chaque carreau du tapis mesure 1 km. Moins le camion roule, mieux c’est.
+
+<Deeper>
+
+C’est le *problème du voyageur de commerce* (TSP, pour *travelling salesman problem*). Il sert de brique de base aux problèmes de tournées de véhicules (VRP) : un VRP, ce sont plusieurs voyageurs de commerce qui se partagent les clients, avec des contraintes en plus.
+
+Ici les distances sont mesurées à vol d’oiseau et sont les mêmes dans les deux sens.
+
+</Deeper>
+
+</Step>
+
+<Step id="draw">
+
+### À toi de jouer
+
+Clique les maisons dans l’ordre où tu les livrerais. Un fil rouge se tend d’épingle en épingle ; à la dernière maison, il revient tout seul au dépôt.
+
+<p class="status" data-bind="drawStatus" aria-live="polite"></p>
+
+<div class="actions">
+  <button type="button" class="button" data-action="undo">Annuler</button>
+  <button type="button" class="button" data-action="reset">Recommencer</button>
+  <button type="button" class="button" data-action="random">Tracer au hasard</button>
+</div>
+
+</Step>
+
+<Step id="explosion">
+
+### Et si on essayait tout ?
+
+Une tournée, c’est un ordre de visite. La maquette en fait défiler quelques-uns, pris au hasard. Combien y en a-t-il en tout ?
+
+<div class="explorer">
+  <label for="houses">Nombre de maisons : <strong data-bind="houses">12</strong></label>
+  <input id="houses" type="range" min="4" max="25" value="12" step="1" data-input="houses" />
+  <dl>
+    <dt>Tournées différentes</dt>
+    <dd data-bind="tourCount"></dd>
+    <dt>Temps pour toutes les tester, à un million par seconde</dt>
+    <dd data-bind="tourTime"></dd>
+  </dl>
+</div>
+
+Pour douze maisons, un ordinateur en vient à bout. Mais chaque maison de plus multiplie le travail : c’est l’**explosion combinatoire**. Au-delà de quelques dizaines de clients, tout essayer n’est plus une option.
+
+<Deeper>
+
+Avec *n* maisons et un dépôt, il y a *n*! ordres de visite. Chaque tournée y est comptée deux fois, une par sens de parcours : cela fait *n*!/2 tournées distinctes.
+
+Le problème est *NP-difficile* : on ne connaît aucun algorithme qui garantisse la meilleure tournée en un temps polynomial en *n*.
+
+</Deeper>
+
+</Step>
+
+<Step id="nn">
+
+### Première idée : au plus proche
+
+Une règle toute simple : de là où il se trouve, le camion va à la **maison non livrée la plus proche**. Puis il recommence.
+
+Les fils clairs sont les distances mesurées ; le fil épais, le choix retenu.
+
+<Player name="nn" />
+
+<Deeper>
+
+<Pseudocode algo="nn" />
+
+C’est une heuristique *constructive* et *gloutonne* : elle bâtit la tournée morceau par morceau, en prenant chaque fois la décision qui paraît la meilleure sur le moment, sans jamais revenir dessus.
+
+Elle demande de l’ordre de *n*² mesures de distance. Sur des villes tirées au hasard, sa tournée est en moyenne environ 25 % plus longue que la meilleure possible.
+
+</Deeper>
+
+</Step>
+
+<Step id="nn-result">
+
+### Rapide, mais myope
+
+<div class="scoreboard" data-scoreboard="first"></div>
+
+<p data-bind="verdict"></p>
+
+À force de prendre le plus proche, le camion laisse derrière lui des maisons isolées, qu’il doit rattraper plus tard par de longs trajets. Le fil surligné en noir, le plus long de la tournée, mesure <strong data-bind="longest">—</strong>.
+
+</Step>

@@ -1,0 +1,144 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 3
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="landscape">
+
+### Un paysage de tournées
+
+Changeons de maquette. Imagine toutes les tournées possibles étalées sur une carte : deux tournées qui ne diffèrent que d’un renouage y sont voisines, et l’altitude de chacune est sa longueur. Chercher la meilleure tournée, c’est chercher le **point le plus bas** du relief.
+
+La bille, c’est la tournée du moment. Les cuvettes sont les optimums locaux : une fois au fond, tous les pas remontent.
+
+Ce relief en carton est une image. Le vrai paysage n’a pas deux dimensions mais des dizaines, et personne ne peut le dessiner. Le phénomène, lui, est le même.
+
+<Deeper>
+
+Ce relief s’appelle le *paysage de recherche* (*fitness landscape* en anglais). Il dépend du voisinage choisi : avec le 2-opt, chaque tournée de 12 maisons a 65 voisines, et le paysage compte 239 500 800 points.
+
+Sur cette maquette, la bille exécute de vrais algorithmes, mais sur une fonction jouet à deux variables.
+
+</Deeper>
+
+</Step>
+
+<Step id="descent">
+
+### Une bille qui ne sait que descendre
+
+Le 2-opt se comporte comme cette bille : elle tente un pas dans une direction au hasard et ne le garde que s’il descend. La bille pâle montre le pas envisagé.
+
+Elle finit toujours au fond d’une cuvette. Laquelle ? Celle qui se trouvait sous son point de départ, pas forcément la plus profonde.
+
+<Player name="descent" />
+
+<div class="actions">
+  <button type="button" class="button" data-action="walk-restart">Autre point de départ</button>
+</div>
+
+</Step>
+
+<Step id="shake">
+
+### Secouer le plateau
+
+L’idée du **recuit simulé** : secouer. Tant que le plateau tremble fort, la bille accepte souvent de monter et franchit les crêtes. Puis on calme peu à peu : elle monte de moins en moins, et finit par se poser.
+
+Une cuvette profonde est plus difficile à quitter qu’une petite : en refroidissant lentement, la bille a de bonnes chances de finir dans la plus profonde. L’épingle dorée marque le point le plus bas qu’elle a visité.
+
+<div class="control">
+  <label for="heat">Température de départ : <strong data-bind="heatLabel">moyenne</strong></label>
+  <input id="heat" type="range" min="0" max="100" value="50" step="1" data-input="heat" />
+</div>
+
+<div class="meter-row">
+  <span>Température actuelle</span>
+  <div class="meter" data-meter="heat" role="img" aria-label="Température actuelle"><div class="meter-fill"></div></div>
+  <strong data-bind="heatNow">50 %</strong>
+</div>
+
+<Player name="shake" />
+
+<div class="actions">
+  <button type="button" class="button" data-action="walk-reroll">Autre tirage</button>
+</div>
+
+Essaie une température nulle : la bille redevient celle de l’étape précédente. Trop haute, elle erre longtemps avant de se décider.
+
+<Deeper>
+
+La règle d’acceptation est celle de Metropolis : un pas qui fait monter de Δ est accepté avec la probabilité exp(−Δ / T). Quand la température T est grande, presque tout passe ; quand elle tend vers zéro, on retrouve la descente pure.
+
+À chaque pas, la température est multipliée par un facteur α un peu inférieur à 1 : c’est un refroidissement *géométrique*. Le nom vient de la métallurgie, où l’on refroidit lentement un métal pour que ses atomes s’ordonnent. La méthode a été proposée en 1983 par Kirkpatrick, Gelatt et Vecchi.
+
+</Deeper>
+
+</Step>
+
+<Step id="sa">
+
+### Le recuit sur la vraie tournée
+
+Retour en ville, sur l’optimum local du chapitre 2. À chaque étape, on tire deux fils au hasard et on envisage de les renouer. Si la tournée raccourcit, on accepte. Si elle rallonge, on accepte **parfois** : d’autant plus volontiers que la température est haute et l’allongement petit.
+
+Un halo orange signale un renouage accepté alors qu’il rallonge la tournée. Regarde la courbe : elle remonte, pour mieux redescendre.
+
+<Player name="sa" skip="Record suivant" />
+
+<figure class="chart">
+  <figcaption>Longueur de la tournée. Le trait doré est la tournée optimale.</figcaption>
+  <div class="chart-plot" data-chart="sa-length"></div>
+</figure>
+
+<figure class="chart">
+  <figcaption>Température, en part de la température de départ</figcaption>
+  <div class="chart-plot" data-chart="sa-heat"></div>
+</figure>
+
+<div class="actions">
+  <button type="button" class="button" data-action="sa-reroll">Autre tirage</button>
+</div>
+
+<Deeper>
+
+<Pseudocode algo="sa" />
+
+Ici la température s’exprime en kilomètres, comme Δ : elle part de 2 km et finit à 0,2 km, en 800 propositions. La tournée courante peut être moins bonne que la meilleure rencontrée ; c’est cette dernière que l’on garde.
+
+Régler la température de départ, la vitesse de refroidissement et le nombre d’étapes fait tout l’art de la méthode : il n’existe pas de réglage universel.
+
+</Deeper>
+
+</Step>
+
+<Step id="sa-result">
+
+### Franchi ?
+
+<div class="scoreboard" data-scoreboard="escape"></div>
+
+<p data-bind="saNote"></p>
+
+<p data-bind="saStats"></p>
+
+Le recuit ne garantit rien : c’est un tirage au sort bien mené. Relance-le, le résultat change.
+
+<div class="actions">
+  <button type="button" class="button" data-action="sa-reroll">Autre tirage</button>
+</div>
+
+<Deeper>
+
+Autre façon de quitter une cuvette, sans hasard : la *recherche tabou*. On se déplace toujours vers la meilleure voisine, même si elle est moins bonne, et on s’interdit pendant quelques étapes de défaire les derniers renouages. Cette liste d’interdits, la *liste taboue*, empêche de retomber aussitôt au fond.
+
+Recuit et tabou sont des *métaheuristiques* : des stratégies générales, indépendantes du problème, pour piloter une recherche locale.
+
+</Deeper>
+
+</Step>

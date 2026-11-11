@@ -1,0 +1,915 @@
+:root {
+  /* Paper-model palette, shared with src/scene/parts.ts. */
+  --table: #e9e1d3;
+  --paper: #fbf8f1;
+  --paper-2: #f3ede1;
+  --line: #ddd2bf;
+  --ink: #2b2622;
+  --ink-2: #5d554c;
+  --ink-3: #8a8177;
+  --red: #d6453d;
+  --blue: #2c6fb3;
+  --gold: #d4a017;
+
+  --sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --mono: 'Cascadia Code', Consolas, 'SF Mono', Menlo, monospace;
+  --stage-height: 48vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--table);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------- stage */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.stage-canvas,
+.stage-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stage-status {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.stage.is-ready .stage-status {
+  display: none;
+}
+
+.hud {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.hud-readout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 152px;
+  padding: 8px 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgb(60 45 25 / 0.12);
+}
+
+.hud-label {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.hud-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage-badge {
+  position: absolute;
+  right: 20px;
+  bottom: 14px;
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+
+/* Text pinned to points of the 3D model; positioned every frame by the scene. */
+.stage-labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.stage-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  color: var(--ink);
+  background: rgb(251 248 241 / 0.92);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-variant-numeric: tabular-nums;
+  will-change: transform;
+}
+
+.stage-label[hidden] {
+  display: none;
+}
+
+/* Hour marks sit beside the ruler rather than on it, so the edge of the stage never crops them. */
+.stage-label.is-hour {
+  margin: 8px 0 0 18px;
+  font-weight: 600;
+  background: none;
+  border-color: transparent;
+  text-shadow:
+    0 0 3px var(--table),
+    0 0 3px var(--table);
+}
+
+.stage:not(.is-ready) .hud,
+.stage:not(.is-ready) .stage-badge {
+  visibility: hidden;
+}
+
+/* ------------------------------------------------------------- story */
+
+.story {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100vw - 32px);
+  margin-left: clamp(16px, 5vw, 72px);
+  padding: 18vh 0 55vh;
+  pointer-events: none;
+}
+
+.card,
+.crumbs {
+  pointer-events: auto;
+}
+
+/* Links between pages: back to the contents, previous and next chapter. */
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 14px;
+  padding: 0 4px;
+  font-size: 0.84rem;
+}
+
+.crumbs a {
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.crumbs a:hover {
+  color: var(--ink);
+  border-bottom-color: currentColor;
+}
+
+/* A whole card that leads to another page. */
+a.card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+a.card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.7) inset,
+    0 16px 34px rgb(60 45 25 / 0.2);
+}
+
+a.card h3::after {
+  content: ' →';
+}
+
+.onward h3,
+.contents h3 {
+  margin-bottom: 6px;
+}
+
+.onward p:last-child,
+.contents p:last-child {
+  font-size: 0.94rem;
+  color: var(--ink-2);
+}
+
+/* The home page: an introduction, then the chapters as a list of cards. */
+.home .hero {
+  margin-bottom: 18px;
+}
+
+.story:has(.home) {
+  padding-bottom: 14vh;
+}
+
+.contents {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card.is-upcoming {
+  box-shadow: none;
+  opacity: 0.75;
+}
+
+.card {
+  padding: 22px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.7) inset,
+    0 10px 28px rgb(60 45 25 / 0.14);
+}
+
+.card > :first-child {
+  margin-top: 0;
+}
+
+.card > :last-child {
+  margin-bottom: 0;
+}
+
+.hero {
+  margin-bottom: 42vh;
+}
+
+.step {
+  margin-bottom: 78vh;
+  opacity: 0.5;
+  transition: opacity 0.35s ease;
+}
+
+.step.is-active {
+  opacity: 1;
+}
+
+.eyebrow {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+h1 {
+  margin: 0 0 14px;
+  font-size: 2.4rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+h3 {
+  margin: 0 0 12px;
+  font-size: 1.4rem;
+}
+
+p {
+  margin: 0 0 12px;
+  text-wrap: pretty;
+}
+
+.lede {
+  font-size: 1.08rem;
+}
+
+.hint {
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.status {
+  padding: 10px 12px;
+  background: var(--paper-2);
+  border-radius: 4px;
+  font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------- buttons */
+
+.button,
+.icon-button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid #cdbfa6;
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.button {
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.button.is-small {
+  padding: 5px 10px;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.button:hover:not(:disabled),
+.icon-button:hover:not(:disabled) {
+  background: var(--paper-2);
+  border-color: var(--ink-3);
+}
+
+.button:disabled,
+.icon-button:disabled {
+  color: var(--ink-3);
+  cursor: default;
+  opacity: 0.6;
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.segmented {
+  display: inline-flex;
+  margin: 0 0 14px;
+  border: 1px solid #cdbfa6;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.segmented button {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 0;
+  cursor: pointer;
+}
+
+.segmented button + button {
+  border-left: 1px solid #cdbfa6;
+}
+
+.segmented button[aria-pressed='true'] {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.segmented button:disabled {
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.segmented-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------------------ player */
+
+.player {
+  margin: 0 0 14px;
+}
+
+.player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.icon-button.is-primary {
+  width: 40px;
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.icon-button.is-primary:hover:not(:disabled) {
+  background: #453d36;
+  border-color: #453d36;
+}
+
+[data-state='paused'] .icon-pause,
+[data-state='playing'] .icon-play {
+  display: none;
+}
+
+.player-speed {
+  margin-left: auto;
+  min-width: 44px;
+  font-variant-numeric: tabular-nums;
+}
+
+.player input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 12px 0 8px;
+  accent-color: var(--ink);
+}
+
+.player-caption {
+  min-height: 3.1em;
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ deeper */
+
+.deeper {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+
+.deeper summary {
+  padding: 10px 0 0;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.deeper-body {
+  padding-top: 10px;
+  color: var(--ink-2);
+}
+
+.deeper-body > :last-child {
+  margin-bottom: 0;
+}
+
+.code {
+  margin: 0 0 12px;
+  padding: 10px 0;
+  list-style: none;
+  background: var(--paper-2);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.code li {
+  padding: 1px 12px;
+  border-left: 3px solid transparent;
+}
+
+.code li.is-current {
+  background: #e6dcc8;
+  border-left-color: var(--ink);
+}
+
+.code code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  white-space: pre;
+  color: var(--ink);
+}
+
+/* -------------------------------------------------------- explosion */
+
+.explorer {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: var(--paper-2);
+  border-radius: 4px;
+}
+
+.explorer label {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.explorer input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 8px 0 10px;
+  accent-color: var(--ink);
+}
+
+.explorer dl {
+  margin: 0;
+}
+
+.explorer dt {
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+
+.explorer dd {
+  margin: 0 0 8px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.explorer dd:last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------- slider and meter */
+
+.control {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: var(--paper-2);
+  border-radius: 4px;
+}
+
+.control label {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.control input[type='range'] {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  accent-color: var(--ink);
+}
+
+.meter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 0.84rem;
+  color: var(--ink-2);
+}
+
+.meter-row strong {
+  min-width: 3.4em;
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The track is a lighter step of the fill's own hue, so the level reads across the whole bar. */
+.meter {
+  --level: 50%;
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  background: #f0d8c2;
+  border-radius: 4px;
+}
+
+.meter-fill {
+  width: var(--level);
+  height: 100%;
+  background: #d9772f;
+  border-radius: 4px;
+}
+
+/* -------------------------------------------------------------- fleet */
+
+.fleet {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 14px;
+}
+
+.fleet:empty {
+  display: none;
+}
+
+.truck {
+  display: grid;
+  grid-template-columns: 16px auto minmax(40px, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A short stroke rather than a box: the mark it stands for is a thread. */
+.truck-key {
+  height: 4px;
+  border-radius: 2px;
+}
+
+.truck-name {
+  font-weight: 600;
+}
+
+.truck-meter {
+  height: 8px;
+  overflow: hidden;
+  background: #e8dfce;
+  border-radius: 4px;
+}
+
+.truck-meter span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.truck-load {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.truck-km {
+  min-width: 4.4em;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* A row with a line of text (when the truck is back) in place of the load gauge. */
+.truck.has-detail {
+  grid-template-columns: 16px auto 1fr auto;
+}
+
+.truck.has-detail .truck-load {
+  text-align: right;
+  white-space: normal;
+}
+
+.truck-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+
+/* -------------------------------------------------------- scoreboard */
+
+.scoreboard {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.score {
+  padding: 2px 6px;
+  margin: 0 -6px;
+  border-radius: 4px;
+}
+
+.score:hover {
+  background: var(--paper-2);
+}
+
+.score-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+
+.score-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+}
+
+.score-bar {
+  flex: none;
+  height: 12px;
+  border-radius: 0 4px 4px 0;
+}
+
+.score-value {
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-value.is-empty {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.score-gap {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------- chart */
+
+.chart {
+  margin: 0 0 4px;
+}
+
+.chart figcaption {
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+
+.chart-plot {
+  position: relative;
+  height: 132px;
+  cursor: crosshair;
+}
+
+.chart-plot svg {
+  display: block;
+  overflow: visible;
+}
+
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-tick {
+  fill: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-end {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chart-marker {
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+
+.chart + .chart {
+  margin-top: 12px;
+}
+
+/* Colour comes from the data (gold for the optimum), set on the element. */
+.chart-reference {
+  stroke-width: 1.5;
+}
+
+.chart-crosshair {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+}
+
+.chart-tip {
+  position: absolute;
+  top: -6px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgb(60 45 25 / 0.14);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.chart-tip[hidden] {
+  display: none;
+}
+
+.chart-tip strong {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------ mobile */
+
+@media (max-width: 860px) {
+  .stage {
+    inset: 0 0 auto;
+    height: var(--stage-height);
+    z-index: 2;
+    background: var(--table);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hud {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+
+  .hud-readout {
+    min-width: 120px;
+    padding: 5px 10px;
+  }
+
+  .hud-value {
+    font-size: 1.15rem;
+  }
+
+  .hud .button {
+    padding: 5px 10px;
+    font-size: 0.82rem;
+  }
+
+  .stage-badge {
+    right: 10px;
+    bottom: 6px;
+  }
+
+  .story {
+    width: auto;
+    margin: 0 16px;
+    padding-top: calc(var(--stage-height) + 20px);
+  }
+
+  .hero {
+    margin-bottom: 24vh;
+  }
+
+  .step {
+    margin-bottom: 46vh;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step {
+    transition: none;
+  }
+}

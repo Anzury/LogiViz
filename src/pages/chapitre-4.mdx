@@ -1,0 +1,143 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 4
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="capacity">
+
+### Un camion ne peut pas tout porter
+
+Jusqu’ici, le camion était sans fond. Changeons la règle : devant chaque maison, une pile indique combien de colis elle a commandés. En tout, <strong data-bind="parcelsTotal">—</strong>. Le camion, lui, n’en transporte que <strong data-bind="truckCapacity">10</strong>.
+
+La belle tournée unique, en gris sur la maquette, n’est plus faisable. Il faut au moins <strong data-bind="trucksMin">—</strong>, et une question s’ajoute à l’ordre des visites : **qui livre qui ?**
+
+On cherche toujours à rouler le moins possible, tous camions confondus.
+
+<Deeper>
+
+C’est le *problème de tournées de véhicules avec capacité* (CVRP, pour *capacitated vehicle routing problem*). Il combine deux problèmes difficiles : répartir les maisons entre les camions, et ordonner les visites de chacun.
+
+Le nombre de camions est ici libre. Diviser le nombre de colis par la capacité n’en donne qu’un minimum : selon la taille des commandes, il peut en falloir davantage.
+
+</Deeper>
+
+</Step>
+
+<Step id="fleet-draw">
+
+### À toi de répartir
+
+Clique des maisons pour charger un camion et tracer sa tournée. Quand il est plein, ou quand tu le décides, clique le **dépôt** : il rentre, et un autre camion prend le relais avec une nouvelle couleur.
+
+<p class="status" data-bind="fleetStatus" aria-live="polite"></p>
+
+<p class="hint" data-bind="fleetHint">Survole une maison pour voir sa commande.</p>
+
+<div class="fleet" data-fleet="draw"></div>
+
+<div class="actions">
+  <button type="button" class="button" data-action="fleet-undo">Annuler</button>
+  <button type="button" class="button" data-action="fleet-reset">Recommencer</button>
+  <button type="button" class="button" data-action="fleet-random">Répartir au hasard</button>
+</div>
+
+</Step>
+
+<Step id="cut">
+
+### Première idée : découper la grande tournée
+
+On garde l’ordre de la meilleure tournée unique et on la suit. Dès que la maison suivante ne tient plus dans le camion, il rentre au dépôt et un autre repart.
+
+C’est simple, mais les coupes tombent où elles tombent : un camion peut faire un long aller-retour pour une ou deux maisons.
+
+<Player name="cut" />
+
+<div class="fleet" data-fleet="cut"></div>
+
+<Deeper>
+
+<Pseudocode algo="cut" />
+
+Cette famille de méthodes s’appelle *route d’abord, découpage ensuite*. Ici on coupe dès que le camion est plein ; on peut aussi choisir les coupes de façon optimale, par programmation dynamique, sans changer l’ordre des maisons.
+
+</Deeper>
+
+</Step>
+
+<Step id="savings">
+
+### Deuxième idée : fusionner pour économiser
+
+Partons de la pire organisation : un camion par maison, en étoile autour du dépôt. Si un même camion enchaîne deux maisons, on supprime un retour au dépôt et un départ, et on ajoute le trajet entre les deux. La différence, c’est l’**économie**.
+
+On classe toutes les paires de maisons par économie décroissante, et on fusionne chaque fois que c’est permis : les deux maisons doivent être en bout de tournée, et le camion doit pouvoir tout porter.
+
+<Player name="savings" skip="Fusion suivante" />
+
+<div class="fleet" data-fleet="savings"></div>
+
+<Deeper>
+
+<Pseudocode algo="savings" />
+
+C’est la méthode des économies de Clarke et Wright (1964), encore très utilisée pour obtenir vite une bonne solution de départ. L’économie de la paire (i, j) vaut d(dépôt, i) + d(dépôt, j) − d(i, j) : elle est grande pour deux maisons proches l’une de l’autre et loin du dépôt.
+
+</Deeper>
+
+</Step>
+
+<Step id="relocate">
+
+### Retoucher : changer une maison de camion
+
+Comme au chapitre 2, on peut retoucher le résultat. Le geste le plus simple : retirer une maison de sa tournée et la replacer ailleurs, dans la même tournée ou chez un autre camion qui a encore de la place.
+
+On cherche le déplacement qui fait gagner le plus, on l’applique, et on recommence.
+
+<Player name="relocate" />
+
+<p data-bind="relocateNote"></p>
+
+<div class="fleet" data-fleet="relocate"></div>
+
+<Deeper>
+
+<Pseudocode algo="relocate" />
+
+Ce voisinage s’appelle *relocate*. Il en existe d’autres entre tournées : échanger deux maisons de deux camions (*swap*), ou couper deux tournées et recroiser leurs extrémités. Les solveurs les combinent, avec le 2-opt à l’intérieur de chaque tournée.
+
+</Deeper>
+
+</Step>
+
+<Step id="fleet-result">
+
+### Le compte est bon ?
+
+<div class="scoreboard" data-scoreboard="fleet"></div>
+
+<p data-bind="fleetVerdict"></p>
+
+<p data-bind="fleetNote"></p>
+
+<div class="fleet" data-fleet="result"></div>
+
+<div class="actions">
+  <button type="button" class="button" data-action="fleet-optimum">Voir la répartition optimale</button>
+</div>
+
+<Deeper>
+
+La répartition optimale est calculée exactement : la meilleure tournée pour chaque groupe de maisons, puis le meilleur découpage des maisons en groupes qui tiennent chacun dans un camion. Cela représente environ 3¹², soit 531 000 combinaisons : faisable pour 12 maisons, pas pour 30.
+
+Pour sortir des optimums locaux d’une flotte, on retrouve les idées du chapitre 3, appliquées à ces nouveaux voisinages.
+
+</Deeper>
+
+</Step>

@@ -1,0 +1,144 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 5
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="hours">
+
+### Chacun son créneau
+
+Laissons les colis de côté. Cette fois, chaque client a donné un **créneau** : l’étiquette au-dessus de sa maison indique entre quelles heures il peut recevoir le livreur.
+
+Le camion quitte le dépôt à 8 h, roule à 20 km/h et passe dix minutes chez chaque client. S’il arrive trop tôt, il attend l’ouverture du créneau. S’il arrive après la fermeture, la livraison est ratée.
+
+La meilleure tournée du chapitre 3 est là, en gris. Est-elle à l’heure ? Vu de dessus, impossible à dire : il manque une dimension.
+
+<Deeper>
+
+C’est le *problème de tournées avec fenêtres de temps* (VRPTW, pour *vehicle routing problem with time windows*). Les fenêtres sont ici *dures* : un retard est interdit. D’autres modèles l’autorisent en échange d’une pénalité.
+
+Dans la réalité, les créneaux s’ajoutent à la capacité du chapitre 4, aux pauses des chauffeurs et à la durée maximale d’une tournée.
+
+</Deeper>
+
+</Step>
+
+<Step id="tilt">
+
+### La hauteur devient le temps
+
+Basculons la maquette. Au-dessus de chaque maison se dresse un mât gradué : plus on monte, plus il est tard. La règle au coin du plateau donne les heures, de 8 h à midi.
+
+Sur chaque mât, le **manchon clair** est le créneau du client. Une tournée devient un fil qui grimpe : en pente quand le camion roule, à la verticale quand il livre ou qu’il attend.
+
+Être à l’heure, c’est accrocher chaque mât à l’intérieur de son manchon. Le tracé gris resté au sol est la tournée vue de dessus.
+
+</Step>
+
+<Step id="late">
+
+### La plus courte n’est pas à l’heure
+
+Suivons cette tournée, montre en main. Une perle sur un manchon : livré à temps. Un fil pâle sous un manchon : le livreur attend. Un trait noir au-dessus d’un manchon : trop tard.
+
+<Player name="clock" />
+
+<p data-bind="twLateNote"></p>
+
+La tournée la plus courte ne regarde que les kilomètres. Avec des créneaux, il faut parfois rouler davantage, ou sortir un deuxième camion.
+
+</Step>
+
+<Step id="tw-draw">
+
+### À toi d’être à l’heure
+
+Clique les maisons dans l’ordre de ta tournée : le fil grimpe d’un mât à l’autre. Un clic est refusé s’il fait arriver trop tard. Clique le **dépôt** pour faire rentrer le camion et en sortir un autre, qui repart à 8 h.
+
+<p class="status" data-bind="twStatus" aria-live="polite"></p>
+
+<p class="hint" data-bind="twHint">Survole une maison pour voir quand ce camion y serait.</p>
+
+<div class="fleet" data-fleet="tw-draw"></div>
+
+<div class="actions">
+  <button type="button" class="button" data-action="tw-undo">Annuler</button>
+  <button type="button" class="button" data-action="tw-reset">Recommencer</button>
+</div>
+
+</Step>
+
+<Step id="insertion">
+
+### Insérer, de la plus pressée à la moins pressée
+
+On prend les maisons une par une, en commençant par celle dont le créneau ferme le plus tôt. Pour chacune, on essaie toutes les places dans toutes les tournées, on écarte celles qui mettraient quelqu’un en retard, et on garde celle qui rallonge le moins.
+
+Si aucune place ne convient, un camion de plus sort du dépôt.
+
+<Player name="insertion" />
+
+<div class="fleet" data-fleet="insertion"></div>
+
+<Deeper>
+
+<Pseudocode algo="insertion" />
+
+Les heuristiques d’insertion pour ce problème remontent aux travaux de Solomon (1987). Vérifier qu’une insertion ne met personne en retard oblige à regarder toute la suite de la tournée : chaque minute perdue se répercute sur les clients suivants.
+
+</Deeper>
+
+</Step>
+
+<Step id="tw-relocate">
+
+### Retoucher sans retarder personne
+
+Le plan obtenu est à l’heure, mais il zigzague : en servant les plus pressés d’abord, on a négligé la géographie. Reprenons le geste du chapitre 4, déplacer une maison, avec une règle de plus : aucun déplacement ne doit mettre quelqu’un en retard.
+
+<Player name="tw-relocate" />
+
+<p data-bind="twRelocateNote"></p>
+
+<div class="fleet" data-fleet="tw-relocate"></div>
+
+<Deeper>
+
+<Pseudocode algo="tw-relocate" />
+
+Les fenêtres de temps rendent la recherche locale plus difficile : beaucoup de mouvements qui raccourciraient le trajet sont interdits, et le paysage des solutions se morcelle.
+
+</Deeper>
+
+</Step>
+
+<Step id="tw-result">
+
+### À l’heure, et au plus court
+
+<div class="scoreboard" data-scoreboard="hours"></div>
+
+<p data-bind="twVerdict"></p>
+
+<p data-bind="twNote"></p>
+
+<div class="fleet" data-fleet="tw-result"></div>
+
+<div class="actions">
+  <button type="button" class="button" data-action="tw-optimum">Voir la répartition optimale</button>
+</div>
+
+<Deeper>
+
+La répartition optimale est la plus courte parmi celles où tout le monde est livré à l’heure, quel que soit le nombre de camions. Elle est calculée exactement, par programmation dynamique, ce qui reste possible pour 12 maisons.
+
+D’autres objectifs sont courants : utiliser d’abord le moins de camions possible, ou réduire l’attente des chauffeurs.
+
+</Deeper>
+
+</Step>

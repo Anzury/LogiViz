@@ -1,0 +1,103 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 6
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="stuck">
+
+### Une maison à la fois ne suffit plus
+
+Voici le plan du chapitre 5, revu de dessus : à l’heure partout, et plus aucun déplacement d’une seule maison ne le raccourcit. <span data-bind="lnsStuckNote"></span>
+
+Pour faire mieux, il faudrait bouger plusieurs maisons à la fois. Pris un par un, chacun de ces déplacements rallonge le trajet ou met quelqu’un en retard : c’est un optimum local, comme au chapitre 2.
+
+Le recuit du chapitre 3 en sortait à petits pas, en acceptant de temps en temps de dégrader. Voici une manière plus franche.
+
+</Step>
+
+<Step id="lift">
+
+### Soulever quelques maisons, les reposer
+
+On tire une maison au sort et on la retire du plan avec quatre de ses voisines : sur la maquette, elles se soulèvent, et les fils se referment sans elles.
+
+Puis on les repose une à une, chacune à la meilleure place qui ne met personne en retard, et on retouche le plan obtenu. S’il est plus court que l’ancien, on le garde. Sinon, on remet tout comme avant.
+
+<p class="status" data-bind="lnsDemo" aria-live="polite"></p>
+
+<Deeper>
+
+C’est la *recherche à grand voisinage* (LNS, pour *large neighbourhood search*), proposée par Shaw en 1998. Le voisinage d’un plan devient l’ensemble des plans obtenus en retirant cinq maisons et en les reposant autrement : il est immense, et on n’en visite qu’un point à chaque essai, celui que construit la remise en place.
+
+Retirer des maisons proches les unes des autres leur laisse une chance d’être réorganisées entre elles ; retirer des maisons dispersées revient souvent à les reposer exactement où elles étaient.
+
+</Deeper>
+
+</Step>
+
+<Step id="lns">
+
+### Recommencer, encore et encore
+
+On enchaîne les essais : retirer, reposer, retoucher, comparer. On s’arrête après dix essais de suite sans progrès.
+
+La plupart des essais échouent, et c’est normal : il suffit que quelques-uns réussissent.
+
+<Player name="lns" skip="Essai réussi suivant" />
+
+<figure class="chart">
+  <figcaption>Longueur du plan conservé. Le trait doré est la répartition optimale.</figcaption>
+  <div class="chart-plot" data-chart="lns"></div>
+</figure>
+
+<div class="fleet" data-fleet="lns"></div>
+
+<div class="actions">
+  <button type="button" class="button" data-action="lns-reroll">Autre tirage</button>
+</div>
+
+<Deeper>
+
+<Pseudocode algo="lns" />
+
+Il existe bien d’autres façons de détruire (au hasard, les maisons qui coûtent le plus cher, une tournée entière) et de reconstruire. La variante *adaptative* (ALNS, Ropke et Pisinger, 2006) en garde plusieurs sous la main et choisit à chaque essai selon leurs succès passés.
+
+Les solveurs de tournées les plus performants combinent aujourd’hui ces idées avec le recuit du chapitre 3 pour accepter certains reculs, ou avec des algorithmes génétiques qui croisent plusieurs plans entre eux.
+
+</Deeper>
+
+</Step>
+
+<Step id="lns-result">
+
+### Le plan final, heure par heure
+
+Rebasculons la maquette pour relire le résultat avec la montre.
+
+<div class="scoreboard" data-scoreboard="rebuild"></div>
+
+<p data-bind="lnsNote"></p>
+
+<p data-bind="lnsStats"></p>
+
+<div class="fleet" data-fleet="lns-result"></div>
+
+<div class="actions">
+  <button type="button" class="button" data-action="lns-reroll">Autre tirage</button>
+  <button type="button" class="button" data-action="lns-optimum">Voir la répartition optimale</button>
+</div>
+
+<Deeper>
+
+Comme le recuit, cette méthode dépend du hasard et ne garantit rien : un autre tirage peut s’arrêter plus haut ou plus bas.
+
+Sur de vrais problèmes, avec des centaines ou des milliers de clients, personne ne connaît l’optimum. On juge alors une méthode sur des jeux d’essai publics, en la comparant aux meilleures solutions connues.
+
+</Deeper>
+
+</Step>

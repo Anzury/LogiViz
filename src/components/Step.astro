@@ -1,0 +1,11 @@
+---
+interface Props {
+  /** Name of the scene state this card drives; see `steps` in chapter/controller.ts. */
+  id: string;
+}
+const { id } = Astro.props;
+---
+
+<section class="step" data-step={id}>
+  <div class="card"><slot /></div>
+</section>

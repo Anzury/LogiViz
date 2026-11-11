@@ -1,0 +1,49 @@
+---
+import { CHAPTERS, UPCOMING, chapterHref } from '../chapters';
+import Base from '../layouts/Base.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Base
+  title="La tournée du livreur"
+  description="Comprendre les algorithmes de tournées de livraison, pas à pas, sur une maquette en 3D à manipuler."
+>
+  <div class="home">
+    <header class="card hero">
+      <p class="eyebrow">LogiViz</p>
+      <h1>La tournée du livreur</h1>
+      <p class="lede">
+        Dans quel ordre un camion doit-il faire ses livraisons ? Six chapitres pour comprendre, pas à pas, comment les
+        algorithmes organisent des tournées, sur une maquette que tu peux manipuler.
+      </p>
+      <p class="hint">Fais glisser la maquette pour la tourner.</p>
+    </header>
+
+    <ol class="contents">
+      {
+        CHAPTERS.map((chapter) => (
+          <li>
+            <a class="card" href={chapterHref(base, chapter.number)}>
+              <p class="eyebrow">Chapitre {chapter.number}</p>
+              <h3>{chapter.title}</h3>
+              <p>{chapter.summary}</p>
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <div class="card is-upcoming">
+          <p class="eyebrow">Chapitre {UPCOMING.number} · à venir</p>
+          <h3>{UPCOMING.title}</h3>
+          <p>{UPCOMING.summary}</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</Base>
+
+<script>
+  import { bootHome } from '../chapter/page';
+  bootHome();
+</script>

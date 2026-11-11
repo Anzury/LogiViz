@@ -1,0 +1,51 @@
+---
+import { CHAPTERS, UPCOMING, chapterHref } from '../chapters';
+import Base from './Base.astro';
+
+interface Props {
+  frontmatter: { chapter: number };
+}
+const { chapter } = Astro.props.frontmatter;
+const info = CHAPTERS.find((c) => c.number === chapter)!;
+const previous = CHAPTERS.find((c) => c.number === chapter - 1);
+const next = CHAPTERS.find((c) => c.number === chapter + 1);
+const base = import.meta.env.BASE_URL;
+---
+
+<Base title={`${info.title} · Chapitre ${chapter}`} description={info.summary} chapter={chapter}>
+  <nav class="crumbs" aria-label="Chapitres">
+    <a href={base}>Sommaire</a>
+    {previous && <a href={chapterHref(base, previous.number)}>← Chapitre {previous.number}</a>}
+    {next && <a href={chapterHref(base, next.number)}>Chapitre {next.number} →</a>}
+  </nav>
+
+  <header class="card hero">
+    <p class="eyebrow">Chapitre {chapter} sur {CHAPTERS.length}</p>
+    <h1>{info.title}</h1>
+    <p class="lede">{info.summary}</p>
+    <p class="hint">Fais défiler pour avancer. Fais glisser la maquette pour la tourner.</p>
+  </header>
+
+  <slot />
+
+  {
+    next ? (
+      <a class="card onward" href={chapterHref(base, next.number)}>
+        <p class="eyebrow">Chapitre {next.number} · la suite</p>
+        <h3>{next.title}</h3>
+        <p>{next.summary}</p>
+      </a>
+    ) : (
+      <div class="card onward">
+        <p class="eyebrow">Chapitre {UPCOMING.number} · à venir</p>
+        <h3>{UPCOMING.title}</h3>
+        <p>{UPCOMING.summary}</p>
+      </div>
+    )
+  }
+</Base>
+
+<script>
+  import { boot } from '../chapter/page';
+  boot(Number(document.body.dataset.chapter));
+</script>

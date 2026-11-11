@@ -1,0 +1,36 @@
+---
+interface Props {
+  name: string;
+  /** Label of a button that jumps to the next milestone of the trace; omitted, there is no such button. */
+  skip?: string;
+}
+const { name, skip } = Astro.props;
+---
+
+<div class="player" data-player={name}>
+  <div class="player-controls">
+    <button type="button" class="icon-button" data-act="restart" aria-label="Revenir au début">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v10M13 3 6 8l7 5z" /></svg>
+    </button>
+    <button type="button" class="icon-button" data-act="back" aria-label="Étape précédente">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3 4 8l7 5z" /></svg>
+    </button>
+    <button type="button" class="icon-button is-primary" data-act="toggle" data-state="paused" aria-label="Lancer la lecture">
+      <svg class="icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5 13 8l-9 5.5z" /></svg>
+      <svg class="icon-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3h3v10H4zM9 3h3v10H9z" /></svg>
+    </button>
+    <button type="button" class="icon-button" data-act="forward" aria-label="Étape suivante">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 7 5-7 5z" /></svg>
+    </button>
+    {
+      skip && (
+        <button type="button" class="button is-small" data-act="skip">
+          {skip}
+        </button>
+      )
+    }
+    <button type="button" class="button is-small player-speed" data-act="speed" aria-label="Changer la vitesse de lecture">×1</button>
+  </div>
+  <input type="range" min="0" max="0" value="0" step="1" aria-label="Position dans le déroulé de l’algorithme" />
+  <p class="player-caption" aria-live="polite"></p>
+</div>

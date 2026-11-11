@@ -1,0 +1,84 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 2
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="cross">
+
+### Couper deux fils, les renouer
+
+Plutôt que de tout reconstruire, partons de la tournée obtenue et retouchons-la. <span data-bind="crossNote"></span>
+
+On coupe ces deux fils et on les renoue de l’autre façon possible. La tournée reste un circuit complet, mais plus court.
+
+<p class="status" data-bind="crossStatus" aria-live="polite"></p>
+
+<Deeper>
+
+Deux fils qui se croisent peuvent toujours être renoués plus court : c’est une conséquence de l’inégalité triangulaire. L’inverse est faux : certains renouages raccourcissent la tournée sans qu’aucun croisement soit visible.
+
+Renouer inverse le sens de parcours de tout le tronçon situé entre les deux fils.
+
+</Deeper>
+
+</Step>
+
+<Step id="twoopt">
+
+### Recommencer tant que ça raccourcit
+
+On passe en revue **toutes les paires de fils**. Dès qu’un renouage raccourcit la tournée, on le fait. On s’arrête quand plus aucune paire n’améliore. Cette méthode s’appelle le **2-opt**.
+
+<span class="segmented-label">Tournée de départ</span>
+<div class="segmented" role="group" aria-label="Tournée de départ">
+  <button type="button" data-action="source-nn" aria-pressed="true">Plus proche voisin</button>
+  <button type="button" data-action="source-user" aria-pressed="false">Ta tournée</button>
+</div>
+
+<Player name="twoopt" skip="Renouage suivant" />
+
+<figure class="chart">
+  <figcaption>Longueur de la tournée au fil des paires examinées</figcaption>
+  <div class="chart-plot" data-chart="twoopt"></div>
+</figure>
+
+<Deeper>
+
+<Pseudocode algo="twoopt" />
+
+Le 2-opt est une *recherche locale* : on explore le *voisinage* de la tournée courante, c’est-à-dire toutes les tournées accessibles en un seul renouage, et on se déplace vers une voisine meilleure.
+
+Une passe examine de l’ordre de *n*² paires. Ici on applique la première amélioration trouvée ; une variante attend la fin de la passe pour appliquer la meilleure.
+
+</Deeper>
+
+</Step>
+
+<Step id="local">
+
+### Le plafond de verre
+
+Plus aucun renouage n’améliore la tournée : c’est un **optimum local**. Elle est meilleure que toutes ses voisines, mais pas forcément la meilleure de toutes.
+
+<div class="scoreboard" data-scoreboard="final"></div>
+
+<p data-bind="gapNote"></p>
+
+<div class="actions">
+  <button type="button" class="button" data-action="toggle-optimum">Voir la tournée optimale</button>
+</div>
+
+<Deeper>
+
+La tournée optimale est calculée exactement par programmation dynamique (algorithme de Held-Karp), en un temps proportionnel à *n*² · 2ⁿ : faisable pour 12 maisons, hors de portée pour 50.
+
+L’*écart à l’optimum* mesure la qualité d’une heuristique. Quand l’optimum est inconnu, on le remplace par une borne inférieure.
+
+</Deeper>
+
+</Step>
