@@ -1,0 +1,128 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 7
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="doubt">
+
+### Est-ce vraiment la meilleure ?
+
+Revenons au camion seul, et à la meilleure tournée que nous lui connaissons : celle du chapitre 3.
+
+Depuis le début, toutes nos méthodes cherchent de bonnes tournées. Aucune ne dit si l’on peut encore faire mieux. Pour en être sûr, il faudrait avoir écarté toutes les autres, et douze maisons font <strong data-bind="bbOrders">479 001 600</strong> ordres de visite.
+
+Il nous faut un raisonnement capable d’éliminer des tournées par millions, sans les regarder une à une.
+
+<Deeper>
+
+Les méthodes vues jusqu’ici sont des *heuristiques* : rapides, souvent excellentes, sans garantie. Celle de ce chapitre est une méthode *exacte* : elle rend la meilleure solution et la preuve qu’il n’en existe pas de meilleure, au prix d’un temps de calcul qui explose avec la taille du problème.
+
+</Deeper>
+
+</Step>
+
+<Step id="bound">
+
+### Un plancher sous toutes les tournées
+
+Oublions un instant qu’une tournée doit former une seule boucle, et cherchons simplement le **plus court réseau de fils** qui relie le dépôt et toutes les maisons, fourches permises. <span data-bind="bbRootNote"></span>
+
+Or une tournée à laquelle on retire un fil est elle-même un réseau qui relie tout. Elle ne peut donc pas être plus courte que le plus court d’entre eux. Ce nombre est une **borne inférieure** : un plancher sous lequel aucune tournée ne descend.
+
+<p class="status" data-bind="bbBoundStatus" aria-live="polite"></p>
+
+<Deeper>
+
+Ce réseau est un *arbre couvrant de poids minimal*, qui se calcule très vite (algorithme de Prim ou de Kruskal). L’idée générale s’appelle une *relaxation* : on retire une règle du problème pour en obtenir un plus facile, dont la solution ne peut être que meilleure que celle du vrai problème.
+
+Plus la borne est proche de l’optimum, plus la preuve sera courte. Les solveurs utilisent des bornes bien plus fines, comme le 1-arbre de Held et Karp ou la relaxation linéaire renforcée par des coupes.
+
+</Deeper>
+
+</Step>
+
+<Step id="branch">
+
+### Diviser en familles
+
+Rangeons les tournées en familles, selon leur début. Toute tournée commence par l’une des douze maisons : cela fait <span data-bind="bbFamilies">12 familles</span>. Chacune se divise à son tour selon la deuxième maison, et ainsi de suite.
+
+Sur la maquette, cela dessine un arbre au-dessus de la ville, où chaque étage fixe une maison de plus. Une branche qui part du dépôt et monte au-dessus d’une maison, c’est la famille de toutes les tournées qui commencent par elle.
+
+</Step>
+
+<Step id="prune">
+
+### Couper une branche entière
+
+La borne vaut aussi pour une famille : le trajet déjà fixé, plus le plus court réseau qui relie tout le reste. Si ce total atteint déjà la longueur de la meilleure tournée connue, aucune tournée de la famille ne fera mieux. On l’abandonne sans en construire une seule.
+
+<p class="status" data-bind="bbPruneStatus" aria-live="polite"></p>
+
+Sur l’arbre, une famille abandonnée reste un moignon. Sur le plateau, le fil bleu est le début fixé et le réseau gris ce qui borne le reste.
+
+</Step>
+
+<Step id="bnb">
+
+### Explorer, borner, couper
+
+On parcourt l’arbre famille par famille, en essayant d’abord la maison la plus proche. Chaque famille est soit coupée, soit divisée. Quand une tournée complète bat la meilleure connue, elle prend sa place, et toutes les coupes suivantes deviennent plus sévères.
+
+<span class="segmented-label">Tournée de départ</span>
+<div class="segmented" role="group" aria-label="Tournée de départ">
+  <button type="button" data-action="bb-source-best" aria-pressed="true">La meilleure connue</button>
+  <button type="button" data-action="bb-source-nn" aria-pressed="false">Plus proche voisin</button>
+</div>
+
+<Player name="bb" skip="Record suivant" />
+
+<dl class="tally">
+  <div><dt>Familles examinées</dt><dd data-bind="bbExamined">0</dd></div>
+  <div><dt>Abandonnées</dt><dd data-bind="bbCut">0</dd></div>
+  <div><dt>Ordres écartés</dt><dd data-bind="bbRuledOut">0 %</dd></div>
+</dl>
+
+<figure class="chart">
+  <figcaption>Part des ordres de visite écartés</figcaption>
+  <div class="chart-plot" data-chart="bb"></div>
+</figure>
+
+<Deeper>
+
+<Pseudocode algo="bb" />
+
+Cette méthode s’appelle *séparation et évaluation* (*branch and bound* en anglais), et remonte aux travaux de Land et Doig en 1960. L’arbre n’est dessiné ici que sur deux étages ; la recherche, elle, descend jusqu’aux tournées complètes.
+
+Deux choses décident de sa durée : la qualité de la borne, et celle de la tournée de départ. C’est pourquoi les solveurs exacts commencent presque toujours par une bonne heuristique.
+
+</Deeper>
+
+</Step>
+
+<Step id="proof">
+
+### Preuve faite
+
+<div class="scoreboard" data-scoreboard="proof"></div>
+
+<p data-bind="bbProof"></p>
+
+<p data-bind="bbStats"></p>
+
+Ce n’est plus une estimation ni un pari sur le hasard : c’est une certitude, obtenue en ne regardant qu’une infime partie des possibilités.
+
+<Deeper>
+
+Avec quelques dizaines de maisons, cette borne simple ne suffirait plus : l’arbre deviendrait trop grand. En ajoutant des contraintes à la relaxation au fil de la recherche (*branch and cut*), le solveur Concorde a résolu exactement un problème du voyageur de commerce à 85 900 villes.
+
+Pour les tournées de plusieurs véhicules, la méthode de référence est la *génération de colonnes* : chaque tournée possible d’un camion est une variable, et on ne fait entrer dans le calcul que celles qui peuvent améliorer le plan. Elle résout exactement des problèmes de quelques centaines de clients.
+
+</Deeper>
+
+</Step>

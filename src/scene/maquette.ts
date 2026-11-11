@@ -18,6 +18,7 @@ import {
 } from './parts';
 import { buildMarble, buildRelief, surfaceY } from './relief';
 import { ThreadLayer, type Segment } from './threads';
+import { SearchTree } from './searchTree';
 import { Timeline } from './timeline';
 import { Truck } from './truck';
 
@@ -117,6 +118,12 @@ export class Maquette {
   private readonly labelLayer = document.createElement('div');
   private labels: { el: HTMLElement; node: number; time: number | null }[] = [];
   private hourLabels: { el: HTMLElement; at: THREE.Vector3 }[] = [];
+
+  /** The search tree of a branch and bound, grown above the town like the time axis. */
+  readonly tree = new SearchTree();
+  private treeDepth: number | null = null;
+  private treeLabels: { el: HTMLElement; at: THREE.Vector3 }[] = [];
+  private readonly network = new ThreadLayer(0.036, PALETTE.ink, { shadow: true });
   private readonly sun = new THREE.DirectionalLight('#fff0dc', 3);
 
   private readonly relief = new THREE.Group();
@@ -170,6 +177,7 @@ export class Maquette {
     this.labelLayer.className = 'stage-labels';
     host.appendChild(this.labelLayer);
     this.scene.add(this.timeline.group);
+    this.scene.add(this.tree.group, this.network.group);
 
     this.scene.background = new THREE.Color(PALETTE.table);
     this.scene.fog = new THREE.Fog(PALETTE.table, 36, 80);
@@ -293,6 +301,8 @@ export class Maquette {
     this.setTracks([]);
     this.setLabels([]);
     this.setWindows(null);
+    this.setSearchTree(null);
+    this.setNetwork([], PALETTE.ink);
     this.timeline.setRaised(false);
     this.parcels?.removeFromParent();
     this.parcels = null;
@@ -474,6 +484,36 @@ export class Maquette {
         stops.slice(1).map((to, k): Segment => [this.anchors[stops[k]].clone().setY(0.04), this.anchors[to].clone().setY(0.04)]),
       );
     });
+  }
+
+  /**
+   * Stands a search tree over the town, `depth` levels high: a mast per house
+   * with a ring at each level. Null takes it down. It lies flat until
+   * `tree.setRaised(true)`.
+   */
+  setSearchTree(depth: number | null): void {
+    if (depth === this.treeDepth) return;
+    this.treeDepth = depth;
+    for (const mark of this.treeLabels) mark.el.remove();
+    this.treeLabels = [];
+    if (depth === null) {
+      this.tree.clear();
+      return;
+    }
+    this.tree.build(this.anchors, depth);
+    this.treeLabels = this.tree.levelMarks().map(({ at, depth: level }) => {
+      const el = document.createElement('span');
+      el.className = 'stage-label is-hour';
+      el.textContent = level === 0 ? 'dépôt' : level === 1 ? '1re maison' : `${level}e maison`;
+      this.labelLayer.append(el);
+      return { el, at };
+    });
+  }
+
+  /** Threads between houses that do not form a tour, such as the shortest network linking them. */
+  setNetwork(edges: readonly Edge[], color: string): void {
+    this.network.setColor(color);
+    this.network.set(this.segments(edges));
   }
 
   /** Small text labels floating above houses; `time` pins one to a moment on the house's mast. */
@@ -746,6 +786,7 @@ export class Maquette {
       this.pinGroups[node].position.y = house.position.y;
     });
     this.timeline.update(dt);
+    this.tree.update(dt);
     this.placeLabels();
     this.pipeline.render();
   }
@@ -772,6 +813,9 @@ export class Maquette {
     }
     for (const mark of this.hourLabels) {
       put(mark.el, new THREE.Vector3(mark.at.x, mark.at.y * level + 0.08, mark.at.z), level > 0.6);
+    }
+    for (const mark of this.treeLabels) {
+      put(mark.el, new THREE.Vector3(mark.at.x, mark.at.y * this.tree.level + 0.08, mark.at.z), this.tree.level > 0.6);
     }
   }
 }

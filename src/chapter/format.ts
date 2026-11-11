@@ -1,3 +1,4 @@
+import type { BranchEvent } from '../core/branchBound';
 import type { FleetEvent, FleetProblem, MoveEvent } from '../core/fleet';
 import type { LnsEvent } from '../core/lns';
 import type { TimedEvent, TimedProblem } from '../core/timeWindows';
@@ -222,6 +223,42 @@ export function dwellTimed(ev: TimedEvent): number {
 }
 
 export { minutes };
+
+/** One sentence saying what the branch and bound just did. */
+export function describeBranch(ev: BranchEvent): string {
+  switch (ev.kind) {
+    case 'bb-start':
+      return `Meilleure tournée connue : ${km(ev.best)}. Aucune ne peut faire moins de ${km(ev.bound)}.`;
+    case 'bb-node': {
+      const total = `${km(ev.driven)} déjà fixés, au moins ${km(ev.bound - ev.driven)} pour le reste : ${km(ev.bound)} au mieux`;
+      return ev.pruned
+        ? `${total}. Pas moins que ${km(ev.best)} : famille abandonnée.`
+        : `${total}. Cela pourrait battre ${km(ev.best)} : on regarde de plus près.`;
+    }
+    case 'bb-below': {
+      const found = ev.improved ? ' Une meilleure tournée y a été trouvée.' : '';
+      return `${count(ev.examinedBelow, 'famille examinée', 'familles examinées')} plus bas dans cette branche, dont ${ev.cutBelow.toLocaleString('fr-FR')} abandonnées.${found}`;
+    }
+    case 'bb-best':
+      return `Tournée complète de ${km(ev.best)} : elle bat les ${km(ev.previous)} connus et prend leur place.`;
+    case 'bb-done':
+      return `Plus aucune famille à examiner : ${km(ev.best)} est la meilleure tournée possible.`;
+  }
+}
+
+/** How long a branch-and-bound event stays on screen at normal speed, in milliseconds. */
+export function dwellBranch(ev: BranchEvent): number {
+  switch (ev.kind) {
+    case 'bb-node':
+      return ev.pruned ? 320 : 520;
+    case 'bb-below':
+      return 520;
+    case 'bb-best':
+      return 1500;
+    default:
+      return 900;
+  }
+}
 
 /** One sentence saying what the large neighbourhood search just did. */
 export function describeLns(ev: LnsEvent): string {

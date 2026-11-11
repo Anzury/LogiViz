@@ -2,7 +2,7 @@
 
 Un site éducatif sur les algorithmes de la logistique : des guides visuels, pas à pas, qui expliquent les problèmes de tournées de véhicules et les méthodes pour les résoudre, sur une maquette en 3D que l'on peut manipuler.
 
-Six chapitres sont écrits :
+Sept chapitres sont écrits :
 
 1. **Un seul camion** : tracer une tournée, l'explosion combinatoire, le plus proche voisin.
 2. **Améliorer la tournée** : la recherche locale et le 2-opt.
@@ -10,6 +10,7 @@ Six chapitres sont écrits :
 4. **Plusieurs camions** : la capacité, les économies de Clarke et Wright, les déplacements.
 5. **Être à l'heure** : les créneaux horaires, où la hauteur de la maquette devient le temps.
 6. **Détruire pour reconstruire** : la recherche à grand voisinage.
+7. **Prouver qu'on ne peut pas faire mieux** : les bornes, la séparation et évaluation.
 
 ## Lancer le site
 

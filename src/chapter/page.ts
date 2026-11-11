@@ -14,6 +14,7 @@ const CHAPTERS: Record<number, (host: Host) => Promise<ChapterModule>> = {
   4: async (host) => new (await import('./fleet')).Fleet(host),
   5: async (host) => new (await import('./hours')).Hours(host),
   6: async (host) => new (await import('./rebuild')).Rebuild(host),
+  7: async (host) => new (await import('./prove')).Prove(host),
 };
 
 /** The town a page opens on: the one the reader moved to in this tab, else the curated one. */

@@ -1,5 +1,6 @@
 ---
 import { ANNEAL_PSEUDOCODE } from '../core/annealing';
+import { BRANCH_BOUND_PSEUDOCODE } from '../core/branchBound';
 import { CUT_PSEUDOCODE, RELOCATE_PSEUDOCODE, SAVINGS_PSEUDOCODE } from '../core/fleet';
 import { LNS_PSEUDOCODE } from '../core/lns';
 import { NN_PSEUDOCODE } from '../core/nearestNeighbour';
@@ -16,6 +17,7 @@ const LISTINGS = {
   insertion: INSERTION_PSEUDOCODE,
   'tw-relocate': RELOCATE_ON_TIME_PSEUDOCODE,
   lns: LNS_PSEUDOCODE,
+  bb: BRANCH_BOUND_PSEUDOCODE,
 };
 
 interface Props {

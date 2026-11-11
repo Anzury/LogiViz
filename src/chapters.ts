@@ -37,13 +37,18 @@ export const CHAPTERS: ChapterInfo[] = [
     title: 'Détruire pour reconstruire',
     summary: 'Soulever quelques maisons et les reposer autrement : la recherche à grand voisinage.',
   },
+  {
+    number: 7,
+    title: 'Prouver qu’on ne peut pas faire mieux',
+    summary: 'Un plancher sous toutes les tournées, des familles que l’on coupe par millions : la séparation et évaluation.',
+  },
 ];
 
 /** The next chapter to be written, announced at the end of the last one. */
 export const UPCOMING: ChapterInfo = {
-  number: 7,
-  title: 'Prouver qu’on ne peut pas faire mieux',
-  summary: 'Toutes ces méthodes cherchent de bons plans sans jamais prouver qu’ils sont les meilleurs. Pour cela, il faut des bornes, et une façon d’explorer sans tout essayer.',
+  number: 8,
+  title: 'Le monde réel',
+  summary: 'De vraies routes, des commandes qui arrivent en cours de journée, des camions tous différents : ce que les solveurs professionnels ajoutent à ces idées.',
 };
 
 /** Address of a chapter's page under the site's base URL. */
