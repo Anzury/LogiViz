@@ -33,7 +33,8 @@ const { title, description, chapter } = Astro.props;
           </div>
         )
       }
-      <span class="stage-badge">Rendu <span data-bind="backend"></span></span>
+      {/* Development aid: which renderer is drawing. Left out of the published site. */}
+      {import.meta.env.DEV && <span class="stage-badge">Rendu <span data-bind="backend"></span></span>}
     </div>
 
     <main class="story" id="story">

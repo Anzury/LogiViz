@@ -1,5 +1,5 @@
 ---
-import { CHAPTERS, UPCOMING, chapterHref } from '../chapters';
+import { CHAPTERS, UPCOMING, chapterHref, homeHref } from '../chapters';
 import Base from './Base.astro';
 
 interface Props {
@@ -14,7 +14,7 @@ const base = import.meta.env.BASE_URL;
 
 <Base title={`${info.title} · Chapitre ${chapter}`} description={info.summary} chapter={chapter}>
   <nav class="crumbs" aria-label="Chapitres">
-    <a href={base}>Sommaire</a>
+    <a href={homeHref(base)}>Sommaire</a>
     {previous && <a href={chapterHref(base, previous.number)}>← Chapitre {previous.number}</a>}
     {next && <a href={chapterHref(base, next.number)}>Chapitre {next.number} →</a>}
   </nav>

@@ -54,7 +54,8 @@ function failed(error: unknown): void {
 }
 
 function ready(scene: Maquette): void {
-  bind('backend', scene.backend);
+  // The badge naming the renderer is a development aid, absent from the published site.
+  if (import.meta.env.DEV) bind('backend', scene.backend);
   one('#stage').classList.add('is-ready');
 }
 

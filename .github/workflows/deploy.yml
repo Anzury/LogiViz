@@ -1,0 +1,45 @@
+# Construit le site et le publie sur GitHub Pages à chaque push sur main.
+# À activer une fois dans le dépôt : Settings > Pages > Source : « GitHub Actions ».
+name: Mise en ligne
+
+on:
+  push:
+    branches: [main]
+  # Permet aussi de relancer une publication à la main depuis l'onglet Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une seule publication à la fois ; celle qui est en cours va jusqu'au bout.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Lues par astro.config.mjs : le site d'un dépôt est servi sous https://<compte>.github.io/<dépôt>/.
+      SITE_URL: https://${{ github.repository_owner }}.github.io
+      BASE_PATH: /${{ github.event.repository.name }}
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v7
+      - name: Installer, construire et téléverser le site
+        uses: withastro/action@v6
+        with:
+          node-version: 22
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publier sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

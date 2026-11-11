@@ -30,7 +30,26 @@ Le site est alors servi sur `http://localhost:4321`. Les autres commandes :
 | `npm run build` | construit le site statique dans `dist/` |
 | `npm run preview` | sert le site construit |
 
-Le rendu utilise WebGPU quand le navigateur le propose et se replie sur WebGL 2 sinon. Ajouter `?webgl` à l'adresse force le repli.
+Le rendu utilise WebGPU quand le navigateur le propose et se replie sur WebGL 2 sinon.
+
+Deux aides n'existent qu'avec `npm run dev` et sont absentes du site construit : la pastille « Rendu WebGPU » ou « Rendu WebGL2 » en bas de la maquette, et le paramètre `?webgl`, qui force le repli quand on l'ajoute à l'adresse.
+
+## Mise en ligne
+
+Le site est entièrement statique : `npm run build` produit dans `dist/` tout ce qu'il faut servir.
+
+Le dépôt contient de quoi le publier sur GitHub Pages. À chaque push sur `main`, le workflow `.github/workflows/deploy.yml` construit le site et le met en ligne à l'adresse `https://<compte>.github.io/<dépôt>/`. Il suffit de l'autoriser une fois : dans le dépôt, *Settings* > *Pages* > *Source* : « GitHub Actions ».
+
+Comme le site est alors servi dans un sous-dossier, `astro.config.mjs` lit deux variables d'environnement, `SITE_URL` et `BASE_PATH`, que le workflow renseigne. Sans elles, le site se construit pour la racine d'un domaine, ce qui convient à la plupart des autres hébergeurs.
+
+Pour essayer le site tel qu'il sera publié, depuis PowerShell :
+
+```bash
+npx astro build --base /LogiViz
+npx astro preview --base /LogiViz
+```
+
+Dans Git Bash, `/LogiViz` serait transformé en chemin Windows : y faire précéder chaque commande de `MSYS_NO_PATHCONV=1`.
 
 ## Organisation du code
 

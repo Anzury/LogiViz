@@ -82,7 +82,8 @@ export interface PickHandlers {
  */
 export class Maquette {
   static async create(host: HTMLElement): Promise<Maquette> {
-    const forceWebGL = new URLSearchParams(location.search).has('webgl');
+    // While developing, `?webgl` forces the WebGL 2 fallback to try it out. The published site ignores it.
+    const forceWebGL = import.meta.env.DEV && new URLSearchParams(location.search).has('webgl');
     const renderer = new THREE.WebGPURenderer({ antialias: true, forceWebGL });
     await renderer.init();
     return new Maquette(host, renderer);

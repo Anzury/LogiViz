@@ -56,7 +56,12 @@ export const UPCOMING = {
   summary: 'Les tournées ne sont qu’une famille de problèmes. Viendront ensuite : ranger des colis dans un camion, organiser un entrepôt, choisir où implanter un dépôt.',
 };
 
+/** Address of the home page: the site's base URL, which may or may not come with its final slash. */
+export function homeHref(base: string): string {
+  return base.replace(/\/?$/, '/');
+}
+
 /** Address of a chapter's page under the site's base URL. */
 export function chapterHref(base: string, number: number): string {
-  return `${base.replace(/\/?$/, '/')}chapitre-${number}/`;
+  return `${homeHref(base)}chapitre-${number}/`;
 }
