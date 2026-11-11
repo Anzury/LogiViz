@@ -42,13 +42,18 @@ export const CHAPTERS: ChapterInfo[] = [
     title: 'Prouver qu’on ne peut pas faire mieux',
     summary: 'Un plancher sous toutes les tournées, des familles que l’on coupe par millions : la séparation et évaluation.',
   },
+  {
+    number: 8,
+    title: 'Le monde réel',
+    summary: 'De vraies rues, une rivière et deux ponts, des commandes qui arrivent pendant que le camion roule.',
+  },
 ];
 
-/** The next chapter to be written, announced at the end of the last one. */
-export const UPCOMING: ChapterInfo = {
-  number: 8,
-  title: 'Le monde réel',
-  summary: 'De vraies routes, des commandes qui arrivent en cours de journée, des camions tous différents : ce que les solveurs professionnels ajoutent à ces idées.',
+/** What comes after the last chapter written, announced at its end and on the home page. */
+export const UPCOMING = {
+  label: 'À venir',
+  title: 'D’autres problèmes de logistique',
+  summary: 'Les tournées ne sont qu’une famille de problèmes. Viendront ensuite : ranger des colis dans un camion, organiser un entrepôt, choisir où implanter un dépôt.',
 };
 
 /** Address of a chapter's page under the site's base URL. */

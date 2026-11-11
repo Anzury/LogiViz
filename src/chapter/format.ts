@@ -1,6 +1,8 @@
 import type { BranchEvent } from '../core/branchBound';
 import type { FleetEvent, FleetProblem, MoveEvent } from '../core/fleet';
+import type { DynamicEvent } from '../core/dynamic';
 import type { LnsEvent } from '../core/lns';
+import type { RoadEvent } from '../core/roads';
 import type { TimedEvent, TimedProblem } from '../core/timeWindows';
 import { UNITS_PER_KM, type Instance } from '../core/instance';
 import { nearestMinimum, type Landscape, type WalkEvent } from '../core/landscape';
@@ -223,6 +225,46 @@ export function dwellTimed(ev: TimedEvent): number {
 }
 
 export { minutes };
+
+/** One sentence saying what the shortest-way search just did. */
+export function describeRoad(ev: RoadEvent): string {
+  const tally = `${count(ev.reached.length, 'carrefour traité', 'carrefours traités')}, ${ev.frontier.length} en attente`;
+  switch (ev.kind) {
+    case 'dj-start':
+      return 'Le départ est à distance zéro. Tout le reste est encore inconnu.';
+    case 'dj-settle':
+      return `Le plus proche des carrefours en attente est à ${km(ev.dist)} du départ : traité. ${tally}.`;
+    case 'dj-done':
+      return `L’arrivée est atteinte : ${km(ev.dist)} par la route, après ${count(ev.reached.length, 'carrefour traité', 'carrefours traités')}.`;
+  }
+}
+
+export function dwellRoad(ev: RoadEvent): number {
+  return ev.kind === 'dj-settle' ? 170 : 1200;
+}
+
+/** One sentence saying what just happened on a morning where orders keep coming in. */
+export function describeDynamic(ev: DynamicEvent, dayStart: number): string {
+  const now = hour(dayStart + ev.clock);
+  switch (ev.kind) {
+    case 'dyn-start':
+      return `${hour(dayStart)} : ${count(ev.plan.length, 'commande connue', 'commandes connues')}. Le camion part sur la meilleure tournée pour celles-là.`;
+    case 'dyn-order':
+      return `Une commande est arrivée à ${hour(dayStart + ev.release)} : glissée dans la suite de la tournée, pour ${km(ev.detour)} de plus.`;
+    case 'dyn-drive':
+      return ev.to === 0
+        ? `Retour au dépôt à ${now}, après ${km(ev.driven)}.`
+        : `Livrée à ${now}. Il reste ${count(ev.plan.length, 'arrêt prévu', 'arrêts prévus')}.`;
+    case 'dyn-wait':
+      return `Plus rien à livrer : le camion attend au dépôt jusqu’à ${now}.`;
+    case 'dyn-done':
+      return `Journée finie à ${now} : ${km(ev.driven)} roulés.`;
+  }
+}
+
+export function dwellDynamic(ev: DynamicEvent): number {
+  return ev.kind === 'dyn-order' ? 1700 : 1000;
+}
 
 /** One sentence saying what the branch and bound just did. */
 export function describeBranch(ev: BranchEvent): string {

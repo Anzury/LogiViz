@@ -1,0 +1,114 @@
+---
+layout: ../layouts/Chapter.astro
+chapter: 8
+---
+
+import Step from '../components/Step.astro';
+import Deeper from '../components/Deeper.astro';
+import Player from '../components/Player.astro';
+import Pseudocode from '../components/Pseudocode.astro';
+
+<Step id="streets">
+
+### Une ville a des rues
+
+Depuis le début, le camion file tout droit d’une maison à l’autre, comme un oiseau. Posons enfin des rues sur la maquette : un quadrillage, une rivière que seuls deux ponts traversent, et quelques rues fermées.
+
+Les maisons se sont écartées pour laisser passer les rues. Une allée relie chacune au carrefour le plus proche.
+
+<Deeper>
+
+Un vrai réseau routier se décrit de la même façon, comme un *graphe* : des carrefours, et des tronçons de rue qui les relient, chacun avec sa longueur ou sa durée. Celui d’un pays compte des millions de tronçons, avec des sens uniques, des limitations de vitesse et des interdictions de tourner.
+
+</Deeper>
+
+</Step>
+
+<Step id="crow">
+
+### À vol d’oiseau, ou par la route
+
+<p data-bind="crowStatus"></p>
+
+La distance à vol d’oiseau, en gris, ne dit plus grand-chose : deux maisons voisines peuvent être séparées par la rivière. Avant de chercher une tournée, il faut connaître la vraie distance entre deux lieux, celle du trajet en bleu.
+
+</Step>
+
+<Step id="dijkstra">
+
+### Trouver le plus court chemin
+
+L’algorithme de Dijkstra avance comme une inondation. Il traite les carrefours du plus proche au plus éloigné du départ, en notant pour chacun par quelle rue on y arrive le plus vite. Quand l’eau atteint l’arrivée, le plus court chemin est connu.
+
+<Player name="dijkstra" />
+
+<Deeper>
+
+<Pseudocode algo="dijkstra" />
+
+L’algorithme date de 1959. Sur un réseau national, on l’accélère en orientant la recherche vers l’arrivée (A*) ou en préparant le réseau à l’avance (*hiérarchies de contraction*), ce qui permet de répondre en quelques millisecondes.
+
+Pour une tournée, on calcule une fois pour toutes la distance entre chaque paire de lieux à visiter : c’est la *matrice des distances*. Ici, elle compte 13 lignes et 13 colonnes.
+
+</Deeper>
+
+</Step>
+
+<Step id="byroad">
+
+### Refaire les comptes
+
+Une fois les distances mesurées par la route, toutes les méthodes des chapitres précédents s’appliquent telles quelles : elles n’ont jamais eu besoin que d’un tableau de distances.
+
+Mais le meilleur ordre de visite n’est plus forcément le même.
+
+<span class="segmented-label">Ordre de visite</span>
+<div class="segmented" role="group" aria-label="Ordre de visite">
+  <button type="button" data-action="order-crow" aria-pressed="false">Idéal à vol d’oiseau</button>
+  <button type="button" data-action="order-road" aria-pressed="true">Idéal par la route</button>
+</div>
+
+<div class="scoreboard" data-scoreboard="roads"></div>
+
+<p data-bind="roadNote"></p>
+
+</Step>
+
+<Step id="live">
+
+### Les commandes arrivent en route
+
+Autre confort que nous nous étions accordé : tout savoir dès le matin. Ici, <span data-bind="liveKnown">7</span> commandes sont connues au départ, repérées par un colis. Les <span data-bind="liveLate">5</span> autres tombent pendant que le camion roule.
+
+À chaque arrêt, le livreur regarde ce qui est arrivé et glisse chaque nouvelle commande dans la suite de sa tournée, là où elle rallonge le moins.
+
+<Player name="live" skip="Commande suivante" />
+
+<Deeper>
+
+<Pseudocode algo="live" />
+
+C’est un problème *dynamique* : la décision se prend sans connaître la suite. Insérer au moindre détour est la règle la plus simple. On fait mieux en réoptimisant tout le reste de la tournée à chaque nouvelle commande, avec les méthodes des chapitres 2 à 6, ou en anticipant les quartiers où des commandes sont probables.
+
+</Deeper>
+
+</Step>
+
+<Step id="beyond">
+
+### Le prix de ne pas savoir
+
+<div class="scoreboard" data-scoreboard="live"></div>
+
+<p data-bind="liveNote"></p>
+
+Les vrais problèmes ajoutent encore bien d’autres règles :
+
+- des camions tous différents, par leur taille, leur coût ou leur autonomie ;
+- des colis à collecter et à livrer au cours de la même tournée ;
+- plusieurs dépôts, des pauses obligatoires, une durée de conduite maximale ;
+- des temps de trajet qui changent avec l’heure.
+
+Aucune ne change la recette de ces huit chapitres : construire un plan, le retoucher, le défaire et le rebâtir, en vérifiant à chaque geste que tout reste permis.
+
+</Step>

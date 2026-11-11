@@ -1,8 +1,9 @@
 import * as THREE from 'three/webgpu';
 import { pass, uniform } from 'three/tsl';
 import { dof } from 'three/addons/tsl/display/DepthOfFieldNode.js';
-import { DEPOT, type Instance } from '../core/instance';
+import { DEPOT, type Instance, type Point } from '../core/instance';
 import type { Landscape, Spot } from '../core/landscape';
+import type { RoadMap } from '../core/roads';
 import { mulberry32, type Rng } from '../core/rng';
 import type { Edge } from '../core/trace';
 import {
@@ -17,6 +18,7 @@ import {
   buildParcels,
 } from './parts';
 import { buildMarble, buildRelief, surfaceY } from './relief';
+import { buildRoads } from './roads';
 import { ThreadLayer, type Segment } from './threads';
 import { SearchTree } from './searchTree';
 import { Timeline } from './timeline';
@@ -104,12 +106,23 @@ export class Maquette {
   private parcelsFor: readonly number[] | null = null;
   private parcelSpots: THREE.Vector3[] = [];
   private parcelsShown = false;
-  private parcelScale = 0;
 
   /** Each node's building and pin, so that a house can be picked up off the board. */
   private houses: THREE.Object3D[] = [];
   private pinGroups: THREE.Object3D[] = [];
   private lifted = new Set<number>();
+
+  /** Streets laid over the town, and what has to make room for them. */
+  private roads: THREE.Group | null = null;
+  private roadMapFor: RoadMap | null = null;
+  /** Where each building was built, and where it stands now (it steps back from the streets). */
+  private homes: THREE.Vector3[] = [];
+  private berths: THREE.Vector3[] = [];
+  private trees: THREE.Object3D[] = [];
+  private readonly groundThin: ThreadLayer[] = [];
+  private readonly groundBold: ThreadLayer[] = [];
+  /** Houses whose parcels are out; null means every house that ordered some. */
+  private parcelsOnly: Set<number> | null = null;
 
   /** Time as the third dimension, used from the time-windows chapter on. */
   readonly timeline = new Timeline();
@@ -239,6 +252,8 @@ export class Maquette {
     this.parcelSpots = [];
     this.pinGroups = [];
     this.houses = [];
+    this.homes = [];
+    this.trees = [];
     this.lifted = new Set();
     this.pops = [];
     const buildings: THREE.Vector3[] = [];
@@ -263,6 +278,7 @@ export class Maquette {
       this.parcelSpots.push(anchor.clone().add(new THREE.Vector3(-along.z, 0, along.x).multiplyScalar(0.4)));
       town.add(building);
       this.houses.push(building);
+      this.homes.push(building.position.clone());
       this.pops.push({ object: building, delay: 0.1 + rng() * 0.5, base: 1 });
 
       const target = buildPickTarget();
@@ -285,6 +301,7 @@ export class Maquette {
       tree.position.copy(spot);
       trees.push(spot);
       town.add(tree);
+      this.trees.push(tree);
       this.pops.push({ object: tree, delay: 0.3 + rng() * 0.6, base: tree.scale.x });
     }
 
@@ -302,6 +319,11 @@ export class Maquette {
     this.setLabels([]);
     this.setWindows(null);
     this.setSearchTree(null);
+    this.roads?.removeFromParent();
+    this.roads = null;
+    this.roadMapFor = null;
+    this.berths = this.homes.map((home) => home.clone());
+    this.setGroundLines([]);
     this.setNetwork([], PALETTE.ink);
     this.timeline.setRaised(false);
     this.parcels?.removeFromParent();
@@ -415,8 +437,9 @@ export class Maquette {
   }
 
   /** Piles of parcels beside the houses, one box per parcel ordered; null puts them away. */
-  setParcels(demand: readonly number[] | null): void {
+  setParcels(demand: readonly number[] | null, only?: Iterable<number>): void {
     this.parcelsShown = demand !== null;
+    this.parcelsOnly = only ? new Set(only) : null;
     if (!demand || demand === this.parcelsFor) return;
     this.parcels?.removeFromParent();
     const rng = mulberry32(demand.length * 977 + 13);
@@ -426,11 +449,12 @@ export class Maquette {
       const pile = buildParcels(count, rng);
       pile.position.copy(this.parcelSpots[node]);
       pile.rotation.y = rng() * Math.PI;
+      pile.scale.setScalar(1e-4);
+      pile.userData.node = node;
       piles.add(pile);
     });
     this.parcels = piles;
     this.parcelsFor = demand;
-    this.parcelScale = 0;
     this.scene.add(piles);
   }
 
@@ -532,6 +556,86 @@ export class Maquette {
       label.time = spec.time;
       label.el.textContent = spec.text;
     });
+  }
+
+  // --------------------------------------------------------------- roads
+
+  /** A point of the town, in board units, as a point of the model at height `y`. */
+  private onBoard(point: Point, y: number): THREE.Vector3 {
+    const half = (BOARD_SIDE / WORLD_PER_UNIT) / 2;
+    return new THREE.Vector3((point.x - half) * WORLD_PER_UNIT, y, (point.y - half) * WORLD_PER_UNIT);
+  }
+
+  /**
+   * Lays a street network over the town, or takes it away with null. Buildings
+   * step back so that none stands on a street, and trees in the way are put aside.
+   */
+  setRoadMap(map: RoadMap | null): void {
+    if (map === this.roadMapFor) return;
+    this.roadMapFor = map;
+    this.roads?.removeFromParent();
+    this.roads = null;
+    if (!map) {
+      this.berths = this.homes.map((home) => home.clone());
+      for (const tree of this.trees) tree.visible = true;
+      return;
+    }
+    this.roads = buildRoads(map, (point, y) => this.onBoard(point, y));
+    this.scene.add(this.roads);
+
+    // Streets run along the whole-number lines of the model; keep every building clear of them.
+    const clear = (value: number, margin: number) => {
+      const line = Math.round(value);
+      if (Math.abs(line) > 4 || Math.abs(value - line) >= margin) return value;
+      return line + (value >= line ? margin : -margin);
+    };
+    this.berths = this.homes.map((home, node) => {
+      const margin = node === DEPOT ? 0.5 : 0.38;
+      return new THREE.Vector3(clear(home.x, margin), 0, clear(home.z, margin));
+    });
+    const river = map.river.map((point) => this.onBoard(point, 0));
+    for (const tree of this.trees) {
+      const { x, z } = tree.position;
+      const onStreet = Math.min(Math.abs(x - Math.round(x)), Math.abs(z - Math.round(z))) < 0.22;
+      const inRiver = river.some((point, i) => {
+        const next = river[i + 1];
+        if (!next) return false;
+        const along = next.clone().sub(point);
+        const t = THREE.MathUtils.clamp(tree.position.clone().sub(point).dot(along) / along.lengthSq(), 0, 1);
+        return point.clone().addScaledVector(along, t).distanceTo(tree.position) < 0.5;
+      });
+      tree.visible = !onStreet && !inRiver;
+    }
+  }
+
+  /** Lines drawn flat on the streets: a route, a way being searched. Each group has one colour. */
+  setGroundLines(groups: readonly { color: string; bold?: boolean; segments: readonly (readonly [Point, Point])[] }[]): void {
+    const used = { thin: 0, bold: 0 };
+    for (const group of groups) {
+      const pool = group.bold ? this.groundBold : this.groundThin;
+      const index = group.bold ? used.bold++ : used.thin++;
+      if (!pool[index]) {
+        pool[index] = new ThreadLayer(group.bold ? 0.055 : 0.03, PALETTE.ink);
+        this.scene.add(pool[index].group);
+      }
+      pool[index].setColor(group.color);
+      pool[index].set(group.segments.map(([from, to]): Segment => [this.onBoard(from, 0.085), this.onBoard(to, 0.085)]));
+    }
+    this.groundThin.slice(used.thin).forEach((layer) => layer.set([]));
+    this.groundBold.slice(used.bold).forEach((layer) => layer.set([]));
+  }
+
+  /** Sends one truck round a loop of points of the town, pausing only where `stops` says so. */
+  driveAlong(loop: readonly Point[], stops: readonly boolean[], color: string): void {
+    this.setTrucks([]);
+    const points = loop.map((point) => this.onBoard(point, 0));
+    this.trucks[0]?.assign(points, points[0], color, 0.4, stops);
+  }
+
+  /** Stands the truck still at a point of the town. */
+  parkTruck(point: Point): void {
+    this.setTrucks([]);
+    this.trucks[0]?.assign(null, this.onBoard(point, 0), PALETTE.truck);
   }
 
   // --------------------------------------------------------------- truck
@@ -775,13 +879,18 @@ export class Maquette {
     this.thread.update(dt);
     for (const truck of this.trucks) truck.update(dt);
     if (this.parcels) {
-      this.parcelScale = damp(this.parcelScale, this.parcelsShown ? 1 : 0, 9, dt);
-      this.parcels.visible = this.parcelScale > 0.01;
-      for (const pile of this.parcels.children) pile.scale.setScalar(Math.max(this.parcelScale, 1e-4));
+      // Each pile pops up or shrinks away on its own, as orders come in and are delivered.
+      for (const pile of this.parcels.children) {
+        const out = this.parcelsShown && (this.parcelsOnly === null || this.parcelsOnly.has(pile.userData.node as number));
+        pile.scale.setScalar(Math.max(damp(pile.scale.x, out ? 1 : 0, 9, dt), 1e-4));
+      }
     }
     this.houses.forEach((house, node) => {
       const up = this.lifted.has(node) ? LIFT : 0;
       house.position.y = damp(house.position.y, up, 7, dt);
+      const berth = this.berths[node];
+      house.position.x = damp(house.position.x, berth.x, 6, dt);
+      house.position.z = damp(house.position.z, berth.z, 6, dt);
       house.rotation.z = damp(house.rotation.z, up > 0 ? 0.14 : 0, 7, dt);
       this.pinGroups[node].position.y = house.position.y;
     });

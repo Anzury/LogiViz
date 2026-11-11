@@ -8,6 +8,8 @@ export class Truck {
   readonly group: THREE.Group;
   private readonly cab: THREE.MeshStandardMaterial;
   private route: THREE.Vector3[] | null = null;
+  /** Which points of the loop the truck pauses at; null means all of them. */
+  private stops: readonly boolean[] | null = null;
   private key = '';
   private leg = 0;
   private progress = 0;
@@ -24,11 +26,12 @@ export class Truck {
    * Sends the truck round `loop` (first point: the depot), or parks it at `home`
    * when the loop is null. Being given the same loop again does not restart it.
    */
-  assign(loop: THREE.Vector3[] | null, home: THREE.Vector3, color: string, delay = 0.4): void {
+  assign(loop: THREE.Vector3[] | null, home: THREE.Vector3, color: string, delay = 0.4, stops?: readonly boolean[]): void {
     this.cab.color.set(color);
     const key = loop ? loop.map((p) => `${p.x},${p.z}`).join(';') : `home:${home.x},${home.z}`;
     if (key === this.key) return;
     this.key = key;
+    this.stops = stops ?? null;
     this.route = loop && loop.length > 1 ? loop : null;
     this.leg = 0;
     this.progress = 0;
@@ -55,7 +58,8 @@ export class Truck {
     if (this.progress >= 1) {
       this.leg = (this.leg + 1) % this.route.length;
       this.progress = 0;
-      this.pause = 0.25;
+      // Along streets the loop has a point at every corner; only some of them are deliveries.
+      this.pause = !this.stops || this.stops[this.leg] ? 0.25 : 0;
     }
   }
 }
