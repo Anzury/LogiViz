@@ -3,9 +3,9 @@ import { typo } from './format';
 import type { ChapterModule, Host } from './module';
 
 /**
- * Development aid: a switch between the 3D model and the pixel-art stage, on
- * the chapters that stage can already play. The choice is remembered for the
- * tab, so it holds from one chapter to the next. Absent from the published site.
+ * The reader's choice of look: the 3D model, or the same story on the
+ * pixel-art stage. The choice is remembered for the tab, so it holds from one
+ * page to the next. The pixel-art stage is only loaded once it is chosen.
  */
 type Look = 'maquette' | 'pixel';
 
@@ -150,10 +150,10 @@ function rewordForPixels(chapter: number): void {
   }
 }
 
-/** Shows the switch on the chapters that have both looks. Changing look starts the page again. */
-export function bindLook(chapter?: number): void {
+/** Shows the switch on the pages that have both looks. Changing look starts the page again. */
+export function bindLook(chapter: number): void {
   const panel = document.querySelector<HTMLElement>('.console-look');
-  if (!panel || chapter === undefined || (chapter !== HOME && !PIXEL_CHAPTERS[chapter])) return;
+  if (!panel || (chapter !== HOME && !PIXEL_CHAPTERS[chapter])) return;
   panel.hidden = false;
   const look = recall();
   for (const button of panel.querySelectorAll<HTMLButtonElement>('[data-look]')) {

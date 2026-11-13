@@ -19,6 +19,9 @@ const base = import.meta.env.BASE_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} · LogiViz</title>
     <meta name="description" content={description} />
+    <link rel="icon" type="image/png" sizes="32x32" href={`${homeHref(base)}favicon-32.png`} />
+    <link rel="icon" type="image/svg+xml" href={`${homeHref(base)}favicon.svg`} />
+    <link rel="apple-touch-icon" href={`${homeHref(base)}apple-touch-icon.png`} />
   </head>
   <body data-chapter={chapter}>
     {/* How far through the chapter the reader is: one segment per step, filled by the page's script. */}
@@ -69,16 +72,13 @@ const base = import.meta.env.BASE_URL;
           </button>
         )
       }
-      {
-        /* Development aid, left out of the published site: the switch to the pixel-art trial, and what is drawing the scene. */
-        import.meta.env.DEV && (
-          <div class="console-look" role="group" aria-label="Style de rendu (aide de développement)" data-when-ready hidden>
-            <button type="button" data-look="maquette" aria-pressed="true">Maquette</button>
-            <button type="button" data-look="pixel" aria-pressed="false">Pixel</button>
-            <span class="console-note" data-bind="backend" />
-          </div>
-        )
-      }
+      {/* The reader's choice of look: the 3D model, or the same story drawn in pixel art. Shown by the page's script. */}
+      <div class="console-look" role="group" aria-label="Style de rendu" hidden>
+        <button type="button" data-look="maquette" aria-pressed="true">Maquette</button>
+        <button type="button" data-look="pixel" aria-pressed="false">Pixel</button>
+        {/* Development aid, left out of the published site: what is drawing the scene. */}
+        {import.meta.env.DEV && <span class="console-note" data-bind="backend" />}
+      </div>
     </div>
 
     <main class="story" id="story">

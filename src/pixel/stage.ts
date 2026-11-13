@@ -67,8 +67,8 @@ const through = (stops: number[]): Edge[] => stops.slice(1).map((to, i): Edge =>
  * chapters show on the 3D model, answering the same requests (stretch this
  * thread, colour these stops, send the truck round, show this timetable).
  *
- * A trial, only reachable in development: it has no camera, so nothing turns,
- * and it only answers the chapters listed in src/chapter/devLook.ts.
+ * It has no camera, so nothing turns, and it only answers the chapters
+ * listed in src/chapter/look.ts.
  */
 export class PixelStage {
   static async create(host: HTMLElement): Promise<PixelStage> {

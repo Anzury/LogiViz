@@ -158,7 +158,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Development aid: the switch between the 3D model and the pixel-art trial. */
+/* The reader's choice of look: the 3D model, or the same story in pixel art. */
 .console-look {
   display: flex;
   align-items: center;
@@ -1175,7 +1175,7 @@ p {
     font-size: 1rem;
   }
 
-  /* The development switch takes a row of its own under the rest. */
+  /* The choice of look takes a row of its own under the rest. */
   .console-look {
     flex: 1 0 100%;
     justify-content: center;

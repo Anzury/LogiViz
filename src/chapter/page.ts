@@ -2,6 +2,7 @@ import { Maquette } from '../scene/maquette';
 import { buildCity, nextCity, type City } from '../story/city';
 import { OPENING } from '../story/opening';
 import { typo } from './format';
+import { bindLook, pixelChapter, pixelWanted } from './look';
 import type { ChapterModule, Host, PageStage, TourStage } from './module';
 import { session } from './session';
 import { COLOR, MOBILE, all, bind, one } from './ui';
@@ -101,16 +102,13 @@ function progressBar(steps: number): (reached: number) => void {
 
 function failed(error: unknown): void {
   console.error(error);
-  bind('stageStatus', 'Impossible d’afficher la maquette : ce navigateur ne propose ni WebGPU ni WebGL 2.');
+  // The pixel-art look needs neither: the switch stays within reach.
+  bind('stageStatus', 'Impossible d’afficher la maquette : ce navigateur ne propose ni WebGPU ni WebGL 2. Le rendu « Pixel », en haut à droite, fonctionne sans.');
 }
 
-function ready(scene: { backend: string }, chapter?: number): void {
-  // Development aids, absent from the published site: the badge naming what
-  // draws the scene, and the switch between the 3D model and the pixel-art trial.
-  if (import.meta.env.DEV) {
-    bind('backend', scene.backend);
-    void import('./devLook').then((dev) => dev.bindLook(chapter));
-  }
+function ready(scene: { backend: string }): void {
+  // Development aid, absent from the published site: the name of what draws the scene.
+  if (import.meta.env.DEV) bind('backend', scene.backend);
   one('#stage').classList.add('is-ready');
 }
 
@@ -222,23 +220,22 @@ export async function boot(chapter: number): Promise<void> {
   polishTypography(one('#story'));
   bindMenu();
   bindStepCues();
+  bindLook(chapter);
   try {
-    // In development, the single-truck chapters can be played on the pixel-art stage instead.
-    if (import.meta.env.DEV) {
-      const pixel = (await import('./devLook')).pixelChapter(chapter);
-      if (pixel) {
-        const { PixelStage } = await import('../pixel/stage');
-        const scene = await PixelStage.create(one('#stage-canvas'));
-        const page = new Page(scene);
-        page.start(await pixel(page.host));
-        ready(scene, chapter);
-        return;
-      }
+    // The reader may have chosen the pixel-art stage: it is loaded only then.
+    const pixel = pixelChapter(chapter);
+    if (pixel) {
+      const { PixelStage } = await import('../pixel/stage');
+      const scene = await PixelStage.create(one('#stage-canvas'));
+      const page = new Page(scene);
+      page.start(await pixel(page.host));
+      ready(scene);
+      return;
     }
     const scene = await Maquette.create(one('#stage-canvas'));
     const page = new Page(scene);
     page.start(await CHAPTERS[chapter](page.host));
-    ready(scene, chapter);
+    ready(scene);
   } catch (error) {
     failed(error);
   }
@@ -259,20 +256,20 @@ function showOpening(scene: TourStage): void {
 export async function bootHome(): Promise<void> {
   polishTypography(one('#story'));
   bindMenu();
+  bindLook(0);
   // Coming back to the table of contents is a fresh start: the chapters open on the first town again.
   session.seed = null;
   try {
-    // In development, the home page too can be seen on the pixel-art stage.
-    if (import.meta.env.DEV && (await import('./devLook')).pixelWanted()) {
+    if (pixelWanted()) {
       const { PixelStage } = await import('../pixel/stage');
       const scene = await PixelStage.create(one('#stage-canvas'));
       showOpening(scene);
-      ready(scene, 0);
+      ready(scene);
       return;
     }
     const scene = await Maquette.create(one('#stage-canvas'));
     showOpening(scene);
-    ready(scene, 0);
+    ready(scene);
   } catch (error) {
     failed(error);
   }
