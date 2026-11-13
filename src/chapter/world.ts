@@ -6,7 +6,7 @@ import type { City } from '../story/city';
 import { seedsFor } from '../story/opening';
 import { worldStudy, type WorldStudy } from '../story/worldStudy';
 import { describeDynamic, describeRoad, dwellDynamic, dwellRoad, km, percent, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, WorldStage } from './module';
 import { Player } from './player';
 import { COLOR, all, bind, drawScoreboard, one } from './ui';
 
@@ -66,7 +66,7 @@ export class World implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<WorldStage>) {
     this.searchPlayer = new Player<RoadEvent>(one('[data-player="dijkstra"]'), {
       show: (ev) => this.showSearch(ev),
       caption: (ev) => typo(describeRoad(ev)),

@@ -2,7 +2,7 @@ import { branchAndBound, type BranchEvent } from '../core/branchBound';
 import type { Branch } from '../scene/searchTree';
 import type { City, Solution } from '../story/city';
 import { count, describeBranch, dwellBranch, km, percent, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, ProveStage } from './module';
 import { Player } from './player';
 import { StepChart } from './stepChart';
 import { showTour } from './tourView';
@@ -102,7 +102,7 @@ export class Prove implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<ProveStage>) {
     this.player = new Player<BranchEvent>(one('[data-player="bb"]'), {
       show: (ev, index) => this.showEvent(ev, index),
       caption: (ev) => typo(describeBranch(ev)),

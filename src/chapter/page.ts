@@ -2,7 +2,7 @@ import { Maquette } from '../scene/maquette';
 import { buildCity, nextCity, type City } from '../story/city';
 import { OPENING } from '../story/opening';
 import { typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, PageStage, TourStage } from './module';
 import { session } from './session';
 import { COLOR, MOBILE, all, bind, one } from './ui';
 
@@ -37,7 +37,7 @@ function polishTypography(root: HTMLElement): void {
 }
 
 /** Keeps the model clear of the text column: beside it on desktop, above it on mobile. */
-function followLayout(scene: Maquette, onChange?: () => void): void {
+function followLayout(scene: PageStage, onChange?: () => void): void {
   const story = one('#story');
   const layout = () => scene.setShift(MOBILE.matches ? 0 : story.getBoundingClientRect().right / 2);
   layout();
@@ -48,14 +48,69 @@ function followLayout(scene: Maquette, onChange?: () => void): void {
   });
 }
 
+/** The chapter menu of the console: opens under its button, closes on a choice, on Escape or on a click elsewhere. */
+function bindMenu(): void {
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menu = document.querySelector<HTMLElement>('#chapter-menu');
+  if (!toggle || !menu) return;
+  const set = (open: boolean) => {
+    menu.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+  toggle.addEventListener('click', () => set(Boolean(menu.hidden)));
+  document.addEventListener('click', (e) => {
+    if (!menu.hidden && !(e.target as HTMLElement).closest('.console-menu')) set(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || menu.hidden) return;
+    set(false);
+    toggle.focus();
+  });
+}
+
+/**
+ * The round button under a card: it brings the next card to where a card is
+ * read, beside the model on a wide screen and just under it on a narrow one.
+ */
+function bindStepCues(): void {
+  document.addEventListener('click', (e) => {
+    const cue = (e.target as HTMLElement).closest<HTMLElement>('[data-step-next]');
+    const here = cue?.closest<HTMLElement>('.step, .hero');
+    let next = here?.nextElementSibling ?? null;
+    while (next && !next.matches('.step, .onward')) next = next.nextElementSibling;
+    if (!next) return;
+    const stage = one('#stage');
+    const offset = MOBILE.matches ? stage.getBoundingClientRect().height + 16 : window.innerHeight * 0.3;
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: next.getBoundingClientRect().top + window.scrollY - offset, behavior: calm ? 'auto' : 'smooth' });
+  });
+}
+
+/** The line of segments along the top of the window: one per step, filled up to the step being read. */
+function progressBar(steps: number): (reached: number) => void {
+  const bar = document.querySelector<HTMLElement>('.progress');
+  if (!bar) return () => {};
+  bar.replaceChildren(...Array.from({ length: steps }, () => document.createElement('i')));
+  bar.setAttribute('aria-valuemax', String(steps));
+  return (reached) => {
+    [...bar.children].forEach((segment, i) => segment.classList.toggle('is-reached', i <= reached));
+    bar.setAttribute('aria-valuenow', String(reached + 1));
+    bar.setAttribute('aria-valuetext', `Étape ${reached + 1} sur ${steps}`);
+  };
+}
+
 function failed(error: unknown): void {
   console.error(error);
   bind('stageStatus', 'Impossible d’afficher la maquette : ce navigateur ne propose ni WebGPU ni WebGL 2.');
 }
 
-function ready(scene: Maquette): void {
-  // The badge naming the renderer is a development aid, absent from the published site.
-  if (import.meta.env.DEV) bind('backend', scene.backend);
+function ready(scene: { backend: string }, chapter?: number): void {
+  // Development aids, absent from the published site: the badge naming what
+  // draws the scene, and the switch between the 3D model and the pixel-art trial.
+  if (import.meta.env.DEV) {
+    bind('backend', scene.backend);
+    void import('./devLook').then((dev) => dev.bindLook(chapter));
+  }
   one('#stage').classList.add('is-ready');
 }
 
@@ -63,13 +118,14 @@ function ready(scene: Maquette): void {
  * A chapter page: ties scrolling to the chapter's steps, owns the town, and
  * gives the chapter what it needs from the page.
  */
-class Page {
-  readonly host: Host;
+class Page<S extends PageStage> {
+  readonly host: Host<S>;
   private module!: ChapterModule;
   private city!: City;
   private active = '';
+  private showProgress: (reached: number) => void = () => {};
 
-  constructor(private readonly scene: Maquette) {
+  constructor(private readonly scene: S) {
     this.host = {
       scene,
       hud: (label, value) => {
@@ -105,6 +161,7 @@ class Page {
     // positions, rather than waiting for a card to cross the line, also gets it
     // right after a jump (Home key, restored scroll position on reload).
     const steps = all('[data-step]');
+    this.showProgress = progressBar(steps.length);
     let reached: HTMLElement | null = null;
     let queued = false;
     const update = () => {
@@ -143,7 +200,10 @@ class Page {
     if (step === this.active && !force) return;
     this.leave();
     this.active = step;
-    for (const el of all('[data-step]')) el.classList.toggle('is-active', el.dataset.step === step);
+    all('[data-step]').forEach((el, i) => {
+      el.classList.toggle('is-active', el.dataset.step === step);
+      if (el.dataset.step === step) this.showProgress(i);
+    });
     this.scene.setStage(this.module.stageOf?.(step) ?? 'town');
     this.module.steps[step]?.();
   }
@@ -160,31 +220,59 @@ class Page {
 /** Starts a chapter page. */
 export async function boot(chapter: number): Promise<void> {
   polishTypography(one('#story'));
+  bindMenu();
+  bindStepCues();
   try {
+    // In development, the single-truck chapters can be played on the pixel-art stage instead.
+    if (import.meta.env.DEV) {
+      const pixel = (await import('./devLook')).pixelChapter(chapter);
+      if (pixel) {
+        const { PixelStage } = await import('../pixel/stage');
+        const scene = await PixelStage.create(one('#stage-canvas'));
+        const page = new Page(scene);
+        page.start(await pixel(page.host));
+        ready(scene, chapter);
+        return;
+      }
+    }
     const scene = await Maquette.create(one('#stage-canvas'));
     const page = new Page(scene);
     page.start(await CHAPTERS[chapter](page.host));
-    ready(scene);
+    ready(scene, chapter);
   } catch (error) {
     failed(error);
   }
 }
 
-/** Starts the home page: the opening town, its best tour, and a truck driving round it. */
+/** The home page's picture: the opening town, its best tour, and a truck driving round it. */
+function showOpening(scene: TourStage): void {
+  const { inst, optimum } = buildCity(OPENING.city)!;
+  scene.setInstance(inst);
+  scene.setView('intro');
+  scene.setThread({ tour: optimum.tour, closed: true, color: COLOR.algo });
+  scene.setPins(optimum.tour, COLOR.algo);
+  scene.setTruck(optimum.tour);
+  followLayout(scene);
+}
+
+/** Starts the home page. */
 export async function bootHome(): Promise<void> {
   polishTypography(one('#story'));
+  bindMenu();
   // Coming back to the table of contents is a fresh start: the chapters open on the first town again.
   session.seed = null;
   try {
+    // In development, the home page too can be seen on the pixel-art stage.
+    if (import.meta.env.DEV && (await import('./devLook')).pixelWanted()) {
+      const { PixelStage } = await import('../pixel/stage');
+      const scene = await PixelStage.create(one('#stage-canvas'));
+      showOpening(scene);
+      ready(scene, 0);
+      return;
+    }
     const scene = await Maquette.create(one('#stage-canvas'));
-    const { inst, optimum } = buildCity(OPENING.city)!;
-    scene.setInstance(inst);
-    scene.setView('intro');
-    scene.setThread({ tour: optimum.tour, closed: true, color: COLOR.algo });
-    scene.setPins(optimum.tour, COLOR.algo);
-    scene.setTruck(optimum.tour);
-    followLayout(scene);
-    ready(scene);
+    showOpening(scene);
+    ready(scene, 0);
   } catch (error) {
     failed(error);
   }

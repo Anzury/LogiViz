@@ -6,7 +6,7 @@ import type { City } from '../story/city';
 import { seedsFor } from '../story/opening';
 import { timedStudy, type TimedStudy } from '../story/timedStudy';
 import { count, describeTimed, dwellTimed, hour, km, minutes, percent, span, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, TimedStage } from './module';
 import { Player } from './player';
 import { COLOR, all, bind, drawFleet, drawScoreboard, one, truckColor } from './ui';
 
@@ -70,7 +70,7 @@ export class Hours implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<TimedStage>) {
     const player = (algo: Algo) =>
       new Player<TimedEvent>(one(`[data-player="${algo}"]`), {
         show: (ev) => this.showEvent(ev, algo),

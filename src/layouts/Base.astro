@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { CHAPTERS, chapterHref, chapterTone, homeHref } from '../chapters';
 
 interface Props {
   title: string;
@@ -8,6 +9,7 @@ interface Props {
   chapter?: number;
 }
 const { title, description, chapter } = Astro.props;
+const base = import.meta.env.BASE_URL;
 ---
 
 <!doctype html>
@@ -19,22 +21,64 @@ const { title, description, chapter } = Astro.props;
     <meta name="description" content={description} />
   </head>
   <body data-chapter={chapter}>
+    {/* How far through the chapter the reader is: one segment per step, filled by the page's script. */}
+    {chapter !== undefined && <div class="progress" role="progressbar" aria-label="Progression dans le chapitre" aria-valuemin="0" />}
+
     <div class="stage" id="stage">
       <div class="stage-canvas" id="stage-canvas"></div>
       <p class="stage-status" data-bind="stageStatus">Montage de la maquette…</p>
+    </div>
+
+    {/* Everything the reader can act on outside the text, gathered on one strip the colour of the board's rim. */}
+    <div class="console">
+      <div class="console-menu">
+        <button type="button" class="console-button" data-menu-toggle aria-expanded="false" aria-controls="chapter-menu">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" /></svg>
+          <span>{chapter === undefined ? 'Chapitres' : `Chapitre ${chapter}`}</span>
+        </button>
+        <nav class="menu" id="chapter-menu" aria-label="Chapitres" hidden>
+          <a class="menu-home" href={homeHref(base)} aria-current={chapter === undefined ? 'page' : undefined}>Sommaire</a>
+          <ol>
+            {
+              CHAPTERS.map((entry) => (
+                <li>
+                  <a href={chapterHref(base, entry.number)} aria-current={entry.number === chapter ? 'page' : undefined}>
+                    <span class="tile" style={`--tone: ${chapterTone(entry.number)}`}>
+                      {entry.number}
+                    </span>
+                    <span>{entry.title}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+      </div>
       {
         chapter !== undefined && (
-          <div class="hud">
-            <div class="hud-readout">
-              <span class="hud-label" data-bind="hudLabel">Longueur du fil</span>
-              <span class="hud-value" data-bind="hudValue">—</span>
-            </div>
-            <button type="button" class="button" data-action="new-city">Nouvelle ville</button>
+          <div class="console-readout" data-when-ready>
+            <span class="console-label" data-bind="hudLabel">Longueur du fil</span>
+            <span class="console-value" data-bind="hudValue">—</span>
           </div>
         )
       }
-      {/* Development aid: which renderer is drawing. Left out of the published site. */}
-      {import.meta.env.DEV && <span class="stage-badge">Rendu <span data-bind="backend"></span></span>}
+      {
+        chapter !== undefined && (
+          <button type="button" class="console-button" data-action="new-city" data-when-ready>
+            Nouvelle ville
+          </button>
+        )
+      }
+      {
+        /* Development aid, left out of the published site: the switch to the pixel-art trial, and what is drawing the scene. */
+        import.meta.env.DEV && (
+          <div class="console-look" role="group" aria-label="Style de rendu (aide de développement)" data-when-ready hidden>
+            <button type="button" data-look="maquette" aria-pressed="true">Maquette</button>
+            <button type="button" data-look="pixel" aria-pressed="false">Pixel</button>
+            <span class="console-note" data-bind="backend" />
+          </div>
+        )
+      }
     </div>
 
     <main class="story" id="story">

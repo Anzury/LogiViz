@@ -1,0 +1,190 @@
+---
+// A design study, served only by `npm run dev` (see astro.config.mjs): what
+// LogiViz could look like if every element were redrawn for pixel art.
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Planche d’étude : pixel art · LogiViz</title>
+  </head>
+  <body>
+    <main class="study">
+      <header>
+        <p class="eyebrow">Planche d’étude · non publiée</p>
+        <h1>LogiViz redessiné pour le pixel</h1>
+        <p class="lede">
+          Deux scènes de la ville d’ouverture, non pas filtrées mais redessinées élément par élément. Le décor est discret ; ce qui
+          porte l’information est saturé, cerné, et dessiné par-dessus tout le reste.
+        </p>
+      </header>
+
+      <section>
+        <h2>1. La ville et sa tournée</h2>
+        <p>
+          Le moment clé du chapitre 2 : la tournée du plus proche voisin, les deux fils qui se croisent, et ceux qui les
+          remplaceront.
+        </p>
+        <div class="plate"><canvas data-scene="town"></canvas></div>
+        <ul class="key">
+          <li><i style="background: #1f6fd6"></i>Tournée</li>
+          <li><i style="background: #2b2622; outline: 2px solid #fffdf6"></i>Fils à retirer</li>
+          <li><i class="dashed"></i>Fils de remplacement</li>
+          <li>Un fil qui passe derrière une maison reste visible en pointillé.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2. Les créneaux horaires</h2>
+        <p>
+          Le cas difficile du chapitre 5 : la tournée la plus courte, suivie montre en main. Elle arrive trop tard
+          chez&nbsp;<span data-fact="late">…</span>&nbsp;clients sur&nbsp;<span data-fact="houses">…</span>, et attend
+          devant&nbsp;<span data-fact="waiting">…</span>&nbsp;portes. Chaque arrêt porte son rang dans la tournée ; le même rang se
+          retrouve sur le tableau.
+        </p>
+        <div class="plate"><canvas data-scene="time"></canvas></div>
+        <ul class="key">
+          <li><i style="background: #fffdf6"></i>Créneau du client</li>
+          <li><i style="background: #1f6fd6"></i>Bloc de la couleur du camion : livré à l’heure</li>
+          <li><i class="dotted"></i>Pointillés avant le créneau : le livreur attend</li>
+          <li><i class="striped"></i>Bloc noir, hachures : trop tard</li>
+          <li>Au-dessus de chaque maison : la matinée en sombre, le créneau en clair, l’aiguille à l’heure d’arrivée.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>3. Les éléments, un par un</h2>
+        <p>Chaque élément doit se reconnaître seul, sans son voisin ni sa légende.</p>
+        <div class="sheet" data-vocabulary></div>
+      </section>
+
+      <section>
+        <h2>4. Les règles suivies</h2>
+        <ul class="rules">
+          <li><strong>Deux couches.</strong> Le décor d’abord, l’information ensuite : rien ne la recouvre jamais.</li>
+          <li>
+            <strong>Une palette par rôle.</strong> Décor terne, sans blanc pur ni noir ; information saturée, toujours cernée d’un
+            trait sombre ou clair.
+          </li>
+          <li>
+            <strong>La couleur dit qui, jamais comment.</strong> Une couleur désigne un camion ou une tournée. Un retard se dit
+            en noir et en hachures : il ne peut pas se confondre avec le camion rouge.
+          </li>
+          <li>
+            <strong>Des distances justes.</strong> La ville est vue de face et d’un peu au-dessus : une tournée deux fois plus
+            longue paraît deux fois plus longue.
+          </li>
+          <li>
+            <strong>Le temps à plat.</strong> Plus d’axe vertical : une jauge sur chaque maison, et un tableau où la matinée se lit
+            de gauche à droite.
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <style>
+      .study {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 40px 24px 96px;
+      }
+      .study h1 {
+        font-family: var(--serif);
+        font-size: 2.2rem;
+        line-height: 1.15;
+        margin: 4px 0 12px;
+      }
+      .study h2 {
+        font-family: var(--serif);
+        font-size: 1.35rem;
+        margin: 48px 0 6px;
+      }
+      .study p {
+        max-width: 68ch;
+        margin: 0 0 14px;
+      }
+      .study .eyebrow {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-2);
+        margin: 0;
+      }
+      .study .lede {
+        font-size: 1.1rem;
+        color: var(--ink-2);
+      }
+      .plate {
+        overflow-x: auto;
+      }
+      .plate canvas,
+      .sheet canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+      .key,
+      .rules {
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.9rem;
+        color: var(--ink-2);
+      }
+      .key {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 22px;
+      }
+      .key i {
+        display: inline-block;
+        width: 18px;
+        height: 6px;
+        margin-right: 8px;
+        vertical-align: middle;
+        border: 1px solid var(--ink);
+      }
+      .key i.dotted {
+        background: repeating-linear-gradient(90deg, #1f6fd6 0 2px, #37322d 2px 4px);
+      }
+      .key i.striped {
+        background: repeating-linear-gradient(135deg, #fffdf6 0 3px, #2b2622 3px 6px);
+      }
+      .key i.dashed {
+        background: repeating-linear-gradient(90deg, #fffdf6 0 5px, var(--ink) 5px 7px);
+      }
+      .rules li {
+        max-width: 68ch;
+        margin-bottom: 8px;
+      }
+      .sheet {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 22px 26px;
+        padding: 22px;
+        background: #b4c2a2;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .sheet figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .sheet figcaption {
+        font-size: 0.78rem;
+        color: var(--ink);
+      }
+    </style>
+
+    <script>
+      import { mountStudy } from './pixelStudy';
+      mountStudy();
+    </script>
+  </body>
+</html>

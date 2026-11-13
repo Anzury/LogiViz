@@ -32,7 +32,14 @@ Le site est alors servi sur `http://localhost:4321`. Les autres commandes :
 
 Le rendu utilise WebGPU quand le navigateur le propose et se replie sur WebGL 2 sinon.
 
-Deux aides n'existent qu'avec `npm run dev` et sont absentes du site construit : la pastille « Rendu WebGPU » ou « Rendu WebGL2 » en bas de la maquette, et le paramètre `?webgl`, qui force le repli quand on l'ajoute à l'adresse.
+Quatre aides n'existent qu'avec `npm run dev` et sont absentes du site construit :
+
+- dans la console en haut à droite, le nom de ce qui dessine la scène (WebGPU, WebGL2 ou pixel) ;
+- le paramètre `?webgl`, qui force le repli quand on l'ajoute à l'adresse ;
+- le commutateur « Maquette / Pixel », dans la même console, sur l'accueil et les huit chapitres : il rejoue le chapitre sur une scène en pixel art (`src/pixel/stage.ts`) au lieu de la maquette 3D. C'est un essai : cette scène répond aux mêmes demandes que la maquette (les types `…Stage` de `src/chapter/module.ts` disent lesquelles, chapitre par chapitre), et le choix est retenu d'un chapitre à l'autre. Les phrases qui décrivent la maquette 3D y sont remplacées par celles de `src/chapter/devLook.ts`. ;
+- la page `/etude-pixel/`, une planche d'étude : deux scènes de la ville d'ouverture redessinées élément par élément pour le pixel art (`src/etudes/`), dont les créneaux horaires du chapitre 5. Elle est ajoutée aux routes par `astro.config.mjs` en développement seulement.
+
+Le dessin en pixels vit dans `src/pixel/` : `kit.ts` (palette par rôle, police, éléments), `town.ts` (la ville, ses rues et l'empilement des couches), `timed.ts` (jauges de créneaux et tableau des horaires), `tree.ts` (l'arbre de recherche à plat), `relief.ts` (le paysage en terrasses) et `stage.ts` (la scène animée).
 
 ## Mise en ligne
 

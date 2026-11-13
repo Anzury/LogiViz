@@ -7,7 +7,7 @@ import type { City } from '../story/city';
 import { fleetStudy, type FleetStudy } from '../story/fleetStudy';
 import { seedsFor } from '../story/opening';
 import { count, describeFleet, dwellFleet, km, parcels, percent, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, FleetStage, Host } from './module';
 import { Player } from './player';
 import { COLOR, all, bind, drawFleet, drawScoreboard, one, truckColor } from './ui';
 
@@ -76,7 +76,7 @@ export class Fleet implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<FleetStage>) {
     const player = (algo: Algo, milestone?: (ev: FleetEvent) => boolean) =>
       new Player<FleetEvent>(one(`[data-player="${algo}"]`), {
         show: (ev, index) => this.showEvent(ev, index, algo),

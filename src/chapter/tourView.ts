@@ -1,19 +1,18 @@
 import type { Edge, TraceEvent } from '../core/trace';
-import type { Maquette } from '../scene/maquette';
 import { km } from './format';
-import type { Host } from './module';
+import type { Host, TourStage } from './module';
 import { all } from './ui';
 
 /** Drawing shared by the single-truck chapters. */
 
-export function clearOverlays(scene: Maquette): void {
+export function clearOverlays(scene: TourStage): void {
   scene.setGhosts([]);
   scene.setAccent([]);
   scene.setMarked([]);
 }
 
 /** A finished tour: its thread, its pins, and the truck driving round it. */
-export function showTour(host: Host, tour: number[], color: string, label: string, cost: number): void {
+export function showTour(host: Host<TourStage>, tour: number[], color: string, label: string, cost: number): void {
   host.scene.setThread({ tour, closed: true, color });
   host.scene.setPins(tour, color);
   host.scene.setTruck(tour);
@@ -21,7 +20,7 @@ export function showTour(host: Host, tour: number[], color: string, label: strin
 }
 
 /** Translates one trace event into threads, pins, pseudo-code line and readout. */
-export function showTraceEvent(host: Host, ev: TraceEvent, algo: 'nn' | 'twoopt', color: string, forward: boolean): void {
+export function showTraceEvent(host: Host<TourStage>, ev: TraceEvent, algo: 'nn' | 'twoopt', color: string, forward: boolean): void {
   const { scene } = host;
   clearOverlays(scene);
   const grow = forward && (ev.kind === 'nn-extend' || ev.kind === 'nn-close');

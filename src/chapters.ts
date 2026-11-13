@@ -56,6 +56,14 @@ export const UPCOMING = {
   summary: 'Les tournées ne sont qu’une famille de problèmes. Viendront ensuite : ranger des colis dans un camion, organiser un entrepôt, choisir où implanter un dépôt.',
 };
 
+/**
+ * Where a chapter sits on the single-colour ramp that runs through the
+ * contents: 0 for the first chapter, 1 for the last.
+ */
+export function chapterTone(number: number): number {
+  return CHAPTERS.length > 1 ? (number - 1) / (CHAPTERS.length - 1) : 0;
+}
+
 /** Address of the home page: the site's base URL, which may or may not come with its final slash. */
 export function homeHref(base: string): string {
   return base.replace(/\/?$/, '/');

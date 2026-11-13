@@ -6,7 +6,7 @@ import type { City } from '../story/city';
 import { seedsFor } from '../story/opening';
 import { lnsRun, timedStudy, type TimedStudy } from '../story/timedStudy';
 import { count, describeLns, dwellLns, km, percent, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, RebuildStage } from './module';
 import { Player } from './player';
 import { StepChart } from './stepChart';
 import { showTimedPlan, timedRows, truckName, type Painted } from './timedView';
@@ -73,7 +73,7 @@ export class Rebuild implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<RebuildStage>) {
     this.player = new Player<LnsEvent>(one('[data-player="lns"]'), {
       show: (ev, index) => this.showEvent(ev, index, false),
       caption: (ev) => typo(describeLns(ev)),

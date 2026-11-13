@@ -10,6 +10,11 @@
   --red: #d6453d;
   --blue: #2c6fb3;
   --gold: #d4a017;
+  /* The board's rim: the colour of everything the reader can act on around the model. */
+  --kraft: #c9a26b;
+  --kraft-light: #dbb984;
+  --kraft-dark: #9c7646;
+  --kraft-deep: #7a5a33;
 
   --sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
@@ -65,45 +70,230 @@ body {
   display: none;
 }
 
-.hud {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+/*
+ * The console: everything the reader can act on outside the text, on one strip
+ * the colour of the board's rim. It floats above the stage and the text.
+ */
+.console {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
   display: flex;
   align-items: stretch;
-  gap: 10px;
+  max-width: calc(100vw - 32px);
+  color: var(--ink);
+  background: var(--kraft);
+  border: 1px solid var(--kraft-dark);
+  border-radius: 7px;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.35) inset,
+    0 8px 20px rgb(60 45 25 / 0.18);
+  font-size: 0.86rem;
 }
 
-.hud-readout {
+.console > * + * {
+  border-left: 1px solid rgb(122 90 51 / 0.45);
+}
+
+.console-menu {
+  position: relative;
+  display: flex;
+}
+
+.console-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  min-height: 44px;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.console-button:hover,
+.console-button[aria-expanded='true'] {
+  background: rgb(255 255 255 / 0.24);
+}
+
+.console-button svg,
+.step-next svg,
+.card-go svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.console-readout {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-width: 152px;
-  padding: 8px 14px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  box-shadow: 0 6px 18px rgb(60 45 25 / 0.12);
+  min-width: 132px;
+  padding: 4px 14px;
 }
 
-.hud-label {
-  font-size: 0.75rem;
-  color: var(--ink-2);
+.console-label {
+  overflow: hidden;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgb(43 38 34 / 0.78);
 }
 
-.hud-value {
-  font-size: 1.5rem;
-  font-weight: 600;
+.console-value {
+  font-size: 1.12rem;
+  font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
-.stage-badge {
+/* Development aid: the switch between the 3D model and the pixel-art trial. */
+.console-look {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+}
+
+.console-look[hidden] {
+  display: none;
+}
+
+.console-look button {
+  padding: 4px 9px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.console-look button:hover {
+  background: rgb(255 255 255 / 0.24);
+}
+
+/* The look in use is a paper label stuck on the strip. */
+.console-look button[aria-pressed='true'] {
+  background: var(--paper);
+  border-color: var(--kraft-dark);
+}
+
+.console-note {
+  margin-left: 4px;
+  font-size: 0.68rem;
+  color: rgb(43 38 34 / 0.7);
+}
+
+/* Until the model is up, only the chapter menu is of any use. */
+.stage:not(.is-ready) ~ .console [data-when-ready] {
+  visibility: hidden;
+}
+
+/* The chapter menu: every chapter one click away, from anywhere on a page. */
+.menu {
   position: absolute;
-  right: 20px;
-  bottom: 14px;
-  font-size: 0.72rem;
-  color: var(--ink-3);
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(300px, 100vw - 32px);
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  box-shadow: 0 16px 34px rgb(60 45 25 / 0.22);
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.menu ol {
+  margin: 6px 0 0;
+  padding: 6px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  font-size: 0.9rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.menu a:hover {
+  background: var(--paper-2);
+}
+
+.menu a[aria-current='page'] {
+  font-weight: 700;
+  background: var(--paper-2);
+}
+
+.menu-home {
+  padding-left: 12px;
+}
+
+/* A chapter's number on its tone of the single-colour ramp: pale for the first, deep for the last. */
+.tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: color-mix(in oklab, #efdcb6, #b98a4e calc(var(--tone, 0) * 100%));
+  border: 1px solid rgb(122 90 51 / 0.4);
+  border-radius: 5px;
+}
+
+/* How far through the chapter: a thin line of segments along the top of the window, one per step. */
+.progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 6;
+  display: flex;
+  gap: 3px;
+  height: 4px;
+  pointer-events: none;
+}
+
+.progress i {
+  flex: 1;
+  background: rgb(122 90 51 / 0.2);
+  transition: background 0.3s ease;
+}
+
+.progress i.is-reached {
+  background: var(--kraft-dark);
+}
+
+/* The pixel-art trial: one canvas, enlarged by whole pixels and placed by its script. */
+.stage-canvas canvas.pixel-stage {
+  position: absolute;
+  image-rendering: pixelated;
 }
 
 /* Text pinned to points of the 3D model; positioned every frame by the scene. */
@@ -145,11 +335,6 @@ body {
     0 0 3px var(--table);
 }
 
-.stage:not(.is-ready) .hud,
-.stage:not(.is-ready) .stage-badge {
-  visibility: hidden;
-}
-
 /* ------------------------------------------------------------- story */
 
 .story {
@@ -162,50 +347,66 @@ body {
 }
 
 .card,
-.crumbs {
+.step-next {
   pointer-events: auto;
 }
 
-/* Links between pages: back to the contents, previous and next chapter. */
-.crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  margin: 0 0 14px;
-  padding: 0 4px;
-  font-size: 0.84rem;
-}
-
-.crumbs a {
-  color: var(--ink-2);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-}
-
-.crumbs a:hover {
-  color: var(--ink);
-  border-bottom-color: currentColor;
-}
-
-/* A whole card that leads to another page. */
+/* A whole card that leads to another page: it lifts under the pointer, and says so with a button. */
 a.card {
-  display: block;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
   color: inherit;
   text-decoration: none;
+  background: color-mix(in oklab, var(--paper), #ecd9b2 calc(var(--tone, 0) * 100%));
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
 }
 
-a.card:hover {
+a.card:hover,
+a.card:focus-visible {
   transform: translateY(-2px);
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.7) inset,
     0 16px 34px rgb(60 45 25 / 0.2);
 }
 
-a.card h3::after {
-  content: ' →';
+a.card .tile {
+  width: 38px;
+  height: 38px;
+  font-size: 1.25rem;
+}
+
+.card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-text > :first-child {
+  margin-top: 0;
+}
+
+/* The button of a card that is a link: it is what tells a finger the card can be pressed. */
+.card-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: 999px;
+}
+
+.card-go svg {
+  transition: transform 0.15s ease;
+}
+
+a.card:hover .card-go svg {
+  transform: translateX(3px);
 }
 
 .onward h3,
@@ -213,17 +414,14 @@ a.card h3::after {
   margin-bottom: 6px;
 }
 
-.onward p:last-child,
-.contents p:last-child {
+.onward p,
+.contents p {
+  margin-bottom: 0;
   font-size: 0.94rem;
   color: var(--ink-2);
 }
 
 /* The home page: an introduction, then the chapters as a list of cards. */
-.home .hero {
-  margin-bottom: 18px;
-}
-
 .story:has(.home) {
   padding-bottom: 14vh;
 }
@@ -263,10 +461,68 @@ a.card h3::after {
   margin-bottom: 42vh;
 }
 
+.home .hero {
+  margin-bottom: 18px;
+}
+
 .step {
   margin-bottom: 78vh;
   opacity: 0.5;
   transition: opacity 0.35s ease;
+}
+
+/*
+ * Under each card, a thread runs down towards the next one and ends on a round
+ * button: the story goes on below, and a click goes there.
+ */
+.step-next {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin: 46px 0 0 24px;
+  padding: 0;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid #cdbfa6;
+  border-radius: 50%;
+  box-shadow: 0 6px 16px rgb(60 45 25 / 0.14);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.step-next::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  height: 46px;
+  border-left: 2px dashed var(--kraft-dark);
+  transform: translateX(-1px);
+}
+
+.step-next:hover {
+  background: var(--paper-2);
+  transform: translateY(2px);
+}
+
+/* The arrow nods on the card being read, to say the story goes on. */
+.step.is-active .step-next svg,
+.hero .step-next svg {
+  animation: nod 1.8s ease-in-out infinite;
+}
+
+@keyframes nod {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(2px);
+  }
 }
 
 .step.is-active {
@@ -891,29 +1147,50 @@ p {
     border-bottom: 1px solid var(--line);
   }
 
-  .hud {
+  /* The console becomes a strip across the top of the model. */
+  .console {
     top: 10px;
-    right: 10px;
-    gap: 6px;
+    left: 8px;
+    right: 8px;
+    max-width: none;
+    font-size: 0.8rem;
   }
 
-  .hud-readout {
-    min-width: 120px;
-    padding: 5px 10px;
+  .console-button {
+    padding: 0 10px;
+    min-height: 40px;
   }
 
-  .hud-value {
-    font-size: 1.15rem;
+  .console {
+    flex-wrap: wrap;
   }
 
-  .hud .button {
-    padding: 5px 10px;
-    font-size: 0.82rem;
+  .console-readout {
+    flex: 1;
+    min-width: 96px;
+    padding: 3px 10px;
   }
 
-  .stage-badge {
-    right: 10px;
-    bottom: 6px;
+  .console-value {
+    font-size: 1rem;
+  }
+
+  /* The development switch takes a row of its own under the rest. */
+  .console-look {
+    flex: 1 0 100%;
+    justify-content: center;
+    padding: 4px 6px;
+    border-left: 0;
+    border-top: 1px solid rgb(122 90 51 / 0.45);
+  }
+
+  .console-note {
+    display: none;
+  }
+
+  .menu {
+    left: 0;
+    right: auto;
   }
 
   .story {
@@ -938,5 +1215,9 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .step {
     transition: none;
+  }
+
+  .step-next svg {
+    animation: none !important;
   }
 }

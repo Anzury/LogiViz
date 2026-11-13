@@ -4,7 +4,7 @@ import { record, result, type Trace, type TraceEvent } from '../core/trace';
 import { twoOpt } from '../core/twoOpt';
 import type { City } from '../story/city';
 import { describe, dwell, km, percent, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, TourStage } from './module';
 import { Player } from './player';
 import { session } from './session';
 import { StepChart } from './stepChart';
@@ -67,7 +67,7 @@ export class Improve implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<TourStage>) {
     this.player = new Player<TraceEvent>(one('[data-player="twoopt"]'), {
       show: (ev, index, forward) => {
         showTraceEvent(host, ev, 'twoopt', this.fromUser ? COLOR.user : COLOR.algo, forward);

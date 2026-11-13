@@ -8,4 +8,8 @@ const { id } = Astro.props;
 
 <section class="step" data-step={id}>
   <div class="card"><slot /></div>
+  {/* The thread that leads down to the next card: it says "keep scrolling", and a click does it. */}
+  <button type="button" class="step-next" data-step-next aria-label="Étape suivante">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" /></svg>
+  </button>
 </section>

@@ -6,7 +6,7 @@ import { record, result, type Trace, type TraceEvent } from '../core/trace';
 import type { Maquette } from '../scene/maquette';
 import type { StageName } from '../scene/maquette';
 import type { City, Solution } from '../story/city';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, EscapeStage, Host } from './module';
 import { altitude, count, describe, describeWalk, dwell, dwellWalk, km, percent, typo } from './format';
 import { Player } from './player';
 import { StepChart } from './stepChart';
@@ -91,7 +91,7 @@ export class Escape implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<EscapeStage>) {
     host.scene.setRelief(this.land, COLOR.algo);
 
     this.coldPlayer = new Player<WalkEvent>(one('[data-player="descent"]'), {

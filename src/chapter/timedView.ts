@@ -1,9 +1,9 @@
 import { routeCost } from '../core/fleet';
 import { DEPOT } from '../core/instance';
 import { schedule, type TimedProblem } from '../core/timeWindows';
-import type { Maquette } from '../scene/maquette';
 import type { Span } from '../scene/timeline';
 import { hour, minutes } from './format';
+import type { TimedStage } from './module';
 import { COLOR, type TruckRow } from './ui';
 
 /** A round ready to be drawn: which truck it is, and whether it has driven back yet. */
@@ -22,7 +22,16 @@ export const truckName = (index: number) => `Camion ${index + 1}`;
  * dark stretch above the window when a delivery comes too late. The same rounds
  * are traced flat on the board underneath.
  */
-export function showTimedPlan(scene: Maquette, problem: TimedProblem, painted: Painted[], current: number | null): void {
+export function showTimedPlan(scene: TimedStage, problem: TimedProblem, painted: Painted[], current: number | null): void {
+  // A scene that shows timetables its own way takes the rounds whole.
+  if (scene.setTimedPlan) {
+    scene.setTimedPlan({
+      routes: painted.map((route) => ({ color: route.color, closed: route.closed, ...schedule(problem, route.nodes) })),
+      current,
+    });
+    return;
+  }
+
   const paths: { color: string; spans: Span[] }[] = [];
   const waits: Span[] = [];
   const late: Span[] = [];

@@ -4,7 +4,7 @@ import { randomTour, tourCost } from '../core/tour';
 import type { TraceEvent } from '../core/trace';
 import { HOUSES, longestEdge, type City } from '../story/city';
 import { count, describe, duration, dwell, km, tourCount, typo } from './format';
-import type { ChapterModule, Host } from './module';
+import type { ChapterModule, Host, TourStage } from './module';
 import { Player } from './player';
 import { session } from './session';
 import { showTour, showTraceEvent } from './tourView';
@@ -62,7 +62,7 @@ export class Tour implements ChapterModule {
     },
   };
 
-  constructor(private readonly host: Host) {
+  constructor(private readonly host: Host<TourStage>) {
     this.player = new Player<TraceEvent>(one('[data-player="nn"]'), {
       show: (ev, _index, forward) => showTraceEvent(host, ev, 'nn', COLOR.algo, forward),
       caption: (ev) => typo(describe(ev, this.city.inst)),
